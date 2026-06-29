@@ -9,7 +9,7 @@ int main(){
     uint16_t port = 5000;
     // Creating socket and address
     int serverSocketFD = createTCPIpv4Socket();
-    struct sockaddr_in *serverAddressPtr = createSocketAddress("192.168.1.9", port);
+    struct sockaddr_in *serverAddressPtr = createSocketAddress("127.0.0.1", port);
 
     // Binding the address to socket (AKA assigning name to socket)
     int bindStatus = bind(serverSocketFD, (struct sockaddr*) serverAddressPtr, sizeof(*serverAddressPtr));
@@ -26,13 +26,8 @@ int main(){
         return 1;
     }
 
-    struct acceptedSocket *client = acceptIncomingConnection(serverSocketFD);
-
-    receiveAndPrintIncomingData(serverSocketFD);
-
-    close(client->FD);
+    startAcceptingIncomingConnection(serverSocketFD);
     shutdown(serverSocketFD, SHUT_RDWR);
-
     return 0;
 }
 
