@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "util.h"
-#include <unistd.h>
-#include <string.h>
+#include "network manager/network_manager.h"
 
 int main(){
     uint16_t port = 5000;
