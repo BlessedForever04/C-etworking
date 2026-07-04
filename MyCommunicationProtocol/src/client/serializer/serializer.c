@@ -16,6 +16,43 @@ void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
     }
 }
 
+void packetReaderInIt(struct packetReader *reader, uint32_t payloadSize, int socketFD){
+    reader->buffer = malloc(payloadSize);
+    recv(socketFD, reader->buffer, payloadSize, 0);
+    reader->offset = reader->buffer;
+    reader->size = payloadSize;
+}
+
+char *packetReadString(struct packetReader *reader){
+    uint32_t stringLength;
+    memcpy(&stringLength, reader->offset, sizeof(uint32_t));
+
+    reader->offset += sizeof(uint32_t);
+    reader->size -= sizeof(uint32_t);
+
+    char *string = malloc(stringLength + 1);
+    if(string == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    memcpy(string, reader->offset, stringLength);
+    string[stringLength] = '\0';
+
+    reader->offset += stringLength;
+    reader->size -= stringLength;
+
+    return string;
+}
+
+uint8_t *packetReadBytes(struct packetReader *reader, uint32_t payloadSize){ // Here payload is any byte stream
+    uint8_t *bytes = malloc(payloadSize);
+    memcpy(bytes, reader->offset, payloadSize);
+    reader->offset += payloadSize;
+    reader->size -= payloadSize;
+    return bytes;
+}
+
 void packetWriteBytes(struct packetWriter *writer, void *data, size_t size){
     bool resized = false;
 
@@ -40,7 +77,7 @@ void packetWriteBytes(struct packetWriter *writer, void *data, size_t size){
 
 void packetWriteString(struct packetWriter *writer, char *data){
     bool resized = false;
-    size_t size = strlen(data);
+    uint32_t size = (uint32_t)strlen(data);
 
     while(writer->size + sizeof(size) + size >= writer->capacity){
         writer->capacity *= 2;
@@ -57,7 +94,7 @@ void packetWriteString(struct packetWriter *writer, char *data){
     uint8_t *currentBufferLocation = writer->buffer + writer->size;
     
     memcpy(currentBufferLocation, &size, sizeof(size));
-    currentBufferLocation += 4;
+    currentBufferLocation += sizeof(size);
     memcpy(currentBufferLocation, data, size);
 
     writer->size += sizeof(size);

@@ -6,3 +6,4 @@ extern struct clientList clientList;
 void removeClientFromClientList(int clientFD);
 void addClientToClientList(int clientFD);
 void sendClientListToClient(int FD);
+void sendRoomListToClient(int clientFD);

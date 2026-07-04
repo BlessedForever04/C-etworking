@@ -24,19 +24,19 @@ struct sockaddr_in* createSocketAddress(char *ip_address, uint16_t port){
 void *receiveDataFromClient(void *arg){
     int socketFD = *(int*)arg;
     
-    struct packetHeader header = {0};
+    struct packetHeader *header = malloc(sizeof(header));
 
     while(1){
-        int byteReceived = recv(socketFD, &header, sizeof(header), 0);
+        int byteReceived = recv(socketFD, header, sizeof(header), 0);
         if(byteReceived > 0){
-            manageServerProtocol(header, socketFD);
+            manageServerProtocol(*header, socketFD);
         }
     }
     close(socketFD);
     return NULL;
 }
 
-void receivingAndBroadcastIncomingDataOnSaperateThread(int clientFD){
+void receiveAndManageIncomingDataOnSaperateThread(int clientFD){
     pthread_t clientThread;
     int *clientFDPtr = malloc(sizeof(int));
     *clientFDPtr = clientFD;
@@ -47,10 +47,10 @@ void receivingAndBroadcastIncomingDataOnSaperateThread(int clientFD){
 void startAcceptingIncomingConnection(int serverSocketFD){
     while(1){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
-        sendClientListToClient(acceptedClient->FD);
-        sendRoomListToCleitn(acceptedClient->FD);
+        sendClientListToClient(acceptedClient->FD); // Send list before adding current client
+        sendRoomListToClient(acceptedClient->FD);
         addClientToClientList(acceptedClient->FD);
-        receivingAndBroadcastIncomingDataOnSaperateThread(acceptedClient->FD);
+        receiveAndManageIncomingDataOnSaperateThread(acceptedClient->FD);
     }
 }
 

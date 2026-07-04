@@ -17,6 +17,8 @@ typedef enum {
     PACKET_CLIENT_LIST,
     PACKET_ROOM_LIST,
 
+    PACKET_INTRO, // Only for sending name's payload size while accepting the client
+
     // User events
     PACKET_USER_JOINED, // Header + name
     PACKET_USER_LEFT, // Header
@@ -26,7 +28,6 @@ typedef enum {
     PACKET_DELETE_ROOM, // Room name and password
     PACKET_JOIN_ROOM, // Room name and password
     PACKET_LEAVE_ROOM, // Only header
-    PACKET_ROOM_LIST, // Only header
     PACKET_ROOM_INFO, // Room name
     
     // Administration
@@ -60,7 +61,7 @@ struct packetWriter{
 struct packetReader{
     uint8_t *buffer;
     uint32_t size;
-    uint32_t offset;
+    uint8_t *offset;
 };
 
 struct packetHeader{

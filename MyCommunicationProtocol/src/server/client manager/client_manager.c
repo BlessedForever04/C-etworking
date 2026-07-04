@@ -1,6 +1,7 @@
 #include "client_manager.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "../../client/serializer/serializer.h"
 
 struct clientList clientList = {NULL, 0, 0};
@@ -16,9 +17,17 @@ void removeClientFromClientList(int clientFD){
 }
 
 void addClientToClientList(int clientFD){
-    char name[50];
-    ssize_t byteReceived = recv(clientFD, name, sizeof(name) - 1, 0);
+    struct packetHeader header;
+    recv(clientFD, &header, sizeof(header), 0);
+    
+    char *name = malloc(header.payloadSize + 1);
+    if(name == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    ssize_t byteReceived = recv(clientFD, name, header.payloadSize, 0);
     if(byteReceived <= 0){
+        free(name);
         return;
     }
     name[byteReceived] = '\0';
@@ -28,7 +37,7 @@ void addClientToClientList(int clientFD){
         clientList.capacity = clientList.capacity * 2;
         struct client *temp = realloc(clientList.clients, sizeof(struct client) * clientList.capacity);
         if(temp == NULL){
-            perror(realloc);
+            perror("realloc");
             exit(EXIT_FAILURE);
         }
         else{
@@ -55,16 +64,16 @@ void sendClientListToClient(int clientFD){
     header.payloadSize = payloadSize;
     send(clientFD, &header, sizeof(header), 0);
 
-    struct packetWriter *writer;
-    packetWriterInIt(writer, payloadSize);
+    struct packetWriter writer;
+    packetWriterInIt(&writer, payloadSize);
     
     for(int i = 0; i < clientList.size; i++){
-        packetWriteString(writer, clientList.clients[i].name);
-        packetWriteBytes(writer, &clientList.clients[i].clientFD, 4);
+        packetWriteString(&writer, clientList.clients[i].name);
+        packetWriteBytes(&writer, &clientList.clients[i].clientFD, 4);
     }
 
-    send(clientFD, writer->buffer, writer->size, 0);
-    free(writer->buffer);
+    send(clientFD, writer.buffer, writer.size, 0);
+    free(writer.buffer);
 }
 
 void sendRoomListToClient(int clientFD){

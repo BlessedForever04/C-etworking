@@ -8,9 +8,6 @@
 #include "network/network.h"
 #include "../model.h"
 
-
-
-
 /*
   There are so many messed up things that has to be fixed, 
   Main thing is that we can't transfer a struct directly which includes pointers as properties, 
@@ -41,9 +38,6 @@ Client:
   10. ManageclientProtocol(header.type);
 */
 
-
-
-
 int main(){
     uint16_t port = 5000;
 
@@ -73,6 +67,12 @@ int main(){
         perror("connect");
         return 1;
     }
+    struct packetHeader introHeader;
+    introHeader.type = PACKET_INTRO;
+    introHeader.payloadSize = strlen(name);
+
+    // Sending header for name
+    send(socketFD, &introHeader, sizeof(introHeader), 0);
     
     // Sending client name to server (Client is added in the clients list)
     send(socketFD, name, strlen(name) + 1, 0);    
@@ -103,15 +103,21 @@ int main(){
             break;
         }
 
+        uint32_t payloadSize = 4 + strlen(name) + 4 + strlen(message.message);
         // Building packet header
-        header.payloadSize = strlen(message.message);
+        header.payloadSize = payloadSize;
         header.type = PACKET_CHAT;
-
+        
         // Serialization (building payload)
         struct packetWriter writer;
-        
+        packetWriterInIt(&writer, payloadSize);
+        packetWriteString(&writer, name);
+        packetWriteString(&writer, message.message);
+
         // Sending packet header
         send(socketFD, &header, sizeof(header), 0);
+        // Sending message packet
+        send(socketFD, writer.buffer, writer.size, 0); 
     }
 
     free(name);
