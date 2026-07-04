@@ -36,20 +36,6 @@ void *receiveDataFromClient(void *arg){
     return NULL;
 }
 
-void *receiveDataFromServer(void *arg){ // here the function has to be of *function(*void) type to be used for pthread
-    int serverSocketFD = *(int*)arg;
-    
-    struct packetHeader header = {0};
-
-    while(1){
-        int byteReceived = recv(serverSocketFD, &header, sizeof(header), 0);
-        if(byteReceived > 0){
-            manageClientProtocol(header, serverSocketFD);
-        }
-    }
-    return NULL;
-}
-
 void receivingAndBroadcastIncomingDataOnSaperateThread(int clientFD){
     pthread_t clientThread;
     int *clientFDPtr = malloc(sizeof(int));
@@ -61,6 +47,8 @@ void receivingAndBroadcastIncomingDataOnSaperateThread(int clientFD){
 void startAcceptingIncomingConnection(int serverSocketFD){
     while(1){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
+        sendClientListToClient(acceptedClient->FD);
+        sendRoomListToCleitn(acceptedClient->FD);
         addClientToClientList(acceptedClient->FD);
         receivingAndBroadcastIncomingDataOnSaperateThread(acceptedClient->FD);
     }

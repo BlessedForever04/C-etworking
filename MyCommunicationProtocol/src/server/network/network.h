@@ -1,6 +1,4 @@
-#ifndef NETWORK_MANAGER_H
-#define NETWORK_MANAGER_H
-
+#pragma once
 #include <stdint.h>
 
 int createTCPIpv4Socket();
@@ -10,5 +8,3 @@ void *receiveDataFromServer(void *arg);
 void receivingAndBroadcastIncomingDataOnSaperateThread(int clientFD);
 void startAcceptingIncomingConnection(int serverSocketFD);
 struct acceptedConnection* acceptIncomingConnection(int serverSocketFD);
-
-#endif

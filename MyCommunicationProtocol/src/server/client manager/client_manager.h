@@ -1,11 +1,8 @@
-#ifndef CLIENT_MANAGER_H
-#define CLIENT_MANAGER_H
-
+#pragma once
 #include "../../model.h"
 
 extern struct clientList clientList;
 
 void removeClientFromClientList(int clientFD);
 void addClientToClientList(int clientFD);
-
-#endif
+void sendClientListToClient(int FD);

@@ -25,6 +25,7 @@ int main(){
     }
 
     startAcceptingIncomingConnection(serverSocketFD);
+    free(serverAddressPtr);
     shutdown(serverSocketFD, SHUT_RDWR);
     return 0;
 }

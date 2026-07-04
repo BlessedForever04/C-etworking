@@ -1,0 +1,7 @@
+#pragma once
+#include "../../model.h"
+#include <stdlib.h>
+
+void packetWriteBytes(struct packetWriter *writer, void *data, size_t size);
+void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize);
+void packetWriteString(struct packetWriter *writer, char *data);

@@ -8,64 +8,67 @@
 #include <stdint.h>
 
 typedef enum {
-    // Auth
-    PACKET_LOGIN,
-    PACKET_LOGIN_SUCCESS,
-    PACKET_LOGIN_FAILED,
-    PACKET_LOGOUT,
-    PACKET_DISCONNECT,
+    // Chat
+    PACKET_CHAT, // Communication packet for peer to peer communication (sender, receiver, data)
+    PACKET_WHISPER, // Whispering inside group chat
+    PACKET_GROUP_CHAT, // Message to a group
 
-    // cHAT
-    PACKET_CHAT,
-    PACKET_PRIVATE_MESSAGE,
-    PACKET_BROADCAST,
+    // Client List and Room list
+    PACKET_CLIENT_LIST,
+    PACKET_ROOM_LIST,
 
     // User events
-    PACKET_USER_JOINED,
-    PACKET_USER_LEFT,
-    
-    // Server Notices
-    PACKET_NOTICE,
-    PACKET_WARNING,
-    
+    PACKET_USER_JOINED, // Header + name
+    PACKET_USER_LEFT, // Header
+
     // Rooms / Channels / GROUPS
-    PACKET_CREATE_ROOM,
-    PACKET_DELETE_ROOM,
-    PACKET_JOIN_ROOM,
-    PACKET_LEAVE_ROOM,
-    PACKET_ROOM_LIST,
-    PACKET_ROOM_INFO,
+    PACKET_CREATE_ROOM, // Room name, description and password
+    PACKET_DELETE_ROOM, // Room name and password
+    PACKET_JOIN_ROOM, // Room name and password
+    PACKET_LEAVE_ROOM, // Only header
+    PACKET_ROOM_LIST, // Only header
+    PACKET_ROOM_INFO, // Room name
     
     // Administration
-    PACKET_KICK,
-    PACKET_BAN,
-    PACKET_UNBAN,
-    PACKET_MUTE,
-    PACKET_UNMUTE,
-    PACKET_SET_ADMIN,
-    PACKET_REMOVE_ADMIN,
+    PACKET_KICK, // Username
+    PACKET_MUTE, // Only header
+    PACKET_UNMUTE, // Only header
 
     // File
-    PACKET_FILE,
+    PACKET_FILE, // Header + (char *filename + FILE *data)
 
     // VOICE CHAT
-    PACKET_VOICE_JOIN,
+    PACKET_VOICE_JOIN, 
     PACKET_VOICE_LEAVE,
     PACKET_VOICE_MUTE,
     PACKET_VOICE_UNMUTE,
 
-    // FRIEND SYSTEM
-    PACKET_FRIEND_REQUEST,
-    PACKET_FRIEND_ACCEPT,
-    PACKET_FRIEND_REJECT,
-    PACKET_REMOVE_FRIEND 
 } packetType;
+
+struct packetRoomCreation{
+    char *roomName;
+    char *password;
+    uint8_t roomCapacity;
+};
+
+struct packetWriter{
+    uint8_t *buffer;
+    uint32_t size;
+    uint32_t capacity;
+};
+
+struct packetReader{
+    uint8_t *buffer;
+    uint32_t size;
+    uint32_t offset;
+};
 
 struct packetHeader{
     packetType type;
     uint32_t payloadSize;
 };
 
+// save packet is used for broadcasting only header is different
 struct messagePacket{
     char *sender;
     char *message;

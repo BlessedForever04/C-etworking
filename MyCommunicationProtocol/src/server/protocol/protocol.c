@@ -5,13 +5,10 @@
 
 void manageServerProtocol(struct packetHeader header, int socketFD){
     switch (header.type){
-    case PACKET_BROADCAST:
+    case PACKET_CHAT:
         manageBroadcast(socketFD, header);
         break;
-    case PACKET_NOTICE:
-        manageNotice();
-        break;
-    
+
     default:
         break;
     }
@@ -20,6 +17,8 @@ void manageServerProtocol(struct packetHeader header, int socketFD){
 void manageNotice(void){
 }
 
+// Change header.type 
+// recv payload and not chatPacket and just broadcast the header with payload (Do not parse payload on server side)
 void manageBroadcast(int socketFD, struct packetHeader header){
     char *message = malloc(header.payloadSize);
     ssize_t byteReceived = recv(socketFD, message, header.payloadSize, 0);
