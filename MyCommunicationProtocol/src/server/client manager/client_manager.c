@@ -10,8 +10,8 @@ struct clientList clientList = {NULL, 0, 0};
 void removeClientFromClientList(int clientFD){
     for(int i = 0; i < clientList.size; i++){
         if(clientList.clients[i].clientFD == clientFD){
-            free(clientList.clients[clientList.size - 1].name);
-            clientList.clients[i] = clientList.clients[--clientList.size];
+            clientList.clients[i] = clientList.clients[clientList.size - 1];
+            free(clientList.clients[--clientList.size].name);
             break;
         }
     }
@@ -42,7 +42,6 @@ struct client getClientName(int clientFD){
 }
 
 void addClientToClientList(struct clientList *list, struct client newClient){
-
     if(list->size == list->capacity){
         if(list->capacity == 0) list->capacity = 1;
         list->capacity = list->capacity * 2;

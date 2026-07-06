@@ -6,7 +6,7 @@
 #include "../serializer/serializer.h"
 #include "../../shared/recv_all.h"
 
-static struct clientList userList = {NULL, 0, 0};
+struct clientList userList = {NULL, 0, 0};
 
 void manageClientProtocol(struct packetHeader header, int socketFD){
     switch (header.type){
@@ -39,15 +39,16 @@ void handleLeftUser(int socketFD){
         perror("recv");
         exit(EXIT_FAILURE);
     }
-    removeClientFromClientList(*leftUser);
+    removeClientFromUserList(*leftUser);
+    free(leftUser);
 }
 
-void removeClientFromClientList(int clientFD){
+void removeClientFromUserList(int clientFD){
     printf("Removed client from the local list\n");
     for(int i = 0; i < userList.size; i++){
         if(userList.clients[i].clientFD == clientFD){
-            free(userList.clients[userList.size - 1].name);
-            userList.clients[i] = userList.clients[--userList.size];
+            userList.clients[i] = userList.clients[userList.size - 1];
+            free(userList.clients[--userList.size].name);
             break;
         }
     }
@@ -81,23 +82,9 @@ void receiveAndPrintMessage(int socketFD, struct packetHeader header){
 
 void receiveClientList(struct packetHeader header, int socketFD){
     // Receiving the users (clientList)
-    uint8_t *payload = malloc(header.payloadSize);
-    struct packetReader reader;
-    if(payload == NULL){
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
+    struct packetReader reader; 
+    packetReaderInIt(&reader, header.payloadSize, socketFD);
 
-    ssize_t byteReceived = recv(socketFD, payload, header.payloadSize, 0);
-    if(byteReceived <= 0){
-        free(payload);
-        return;
-    }
-
-    reader.buffer = payload;
-    reader.offset = payload;
-    reader.size = header.payloadSize;
-    
     struct client user;
     
     while(reader.size > 0){
@@ -108,8 +95,7 @@ void receiveClientList(struct packetHeader header, int socketFD){
         free(clientFDBytes);
         addClientToClientList(&userList, user);
     }
-
-    free(payload);
+    free(reader.buffer); 
 }
 
 void receiveRoomList(int socketFD, struct packetHeader header){

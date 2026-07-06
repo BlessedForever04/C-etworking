@@ -20,7 +20,6 @@ void manageServerProtocol(struct packetHeader header, int socketFD){
 }
 
 void manageLeftClient(int socketFD){
-    printf("Someone left server\n");
     removeClientFromClientList(socketFD);
 
     struct packetHeader header;
@@ -30,7 +29,6 @@ void manageLeftClient(int socketFD){
     int FD = socketFD;
 
     for(int i = 0; i < clientList.size; i++){
-        printf("Left Packet sent to %d\n", i);
         send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
         send(clientList.clients[i].clientFD, &FD, sizeof(int), 0);
     }
