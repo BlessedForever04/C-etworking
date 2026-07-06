@@ -69,13 +69,13 @@ int main(){
     }
     struct packetHeader introHeader;
     introHeader.type = PACKET_INTRO;
-    introHeader.payloadSize = strlen(name);
+    introHeader.payloadSize = strlen(name) + 1;
 
     // Sending header for name
     send(socketFD, &introHeader, sizeof(introHeader), 0);
     
     // Sending client name to server (Client is added in the clients list)
-    send(socketFD, name, strlen(name) + 1, 0);    
+    send(socketFD, name, introHeader.payloadSize, 0);    
 
     // Thread for receiving data from server and printing on terminal
     pthread_t receiveThread;
@@ -91,7 +91,6 @@ int main(){
         
         struct packetHeader header = {0};
         if(strcmp(message.message, "bye\n") == 0){
-            snprintf(message.sender, 7, "%s", "Server");
             snprintf(message.message, lineSize, "%s left the chat\n", name);
 
             header.payloadSize = strlen(message.message) + 1;

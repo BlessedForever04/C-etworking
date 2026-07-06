@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../../client/serializer/serializer.h"
+#include "../../shared/recv_all.h"
 
 struct clientList clientList = {NULL, 0, 0};
 
@@ -16,43 +17,51 @@ void removeClientFromClientList(int clientFD){
     }
 }
 
-void addClientToClientList(int clientFD){
+struct client getClientName(int clientFD){
     struct packetHeader header;
-    recv(clientFD, &header, sizeof(header), 0);
+    if(recvAll(clientFD, &header, sizeof(header)) != (ssize_t)sizeof(header)){
+        struct client newClient = {NULL, 0};
+        return newClient;
+    }
     
-    char *name = malloc(header.payloadSize + 1);
-    if(name == NULL){
+    struct client newClient = {NULL, 0};
+
+    newClient.name = malloc(header.payloadSize + 1);
+    if(newClient.name == NULL){
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    ssize_t byteReceived = recv(clientFD, name, header.payloadSize, 0);
-    if(byteReceived <= 0){
-        free(name);
-        return;
+    ssize_t byteReceived = recvAll(clientFD, newClient.name, header.payloadSize);
+    if(byteReceived != (ssize_t)header.payloadSize){
+        free(newClient.name);
+        return newClient;
     }
-    name[byteReceived] = '\0';
+    newClient.name[header.payloadSize] = '\0';
+    newClient.clientFD = clientFD;
+    return newClient;
+}
 
-    if(clientList.size == clientList.capacity){
-        if(clientList.capacity == 0) clientList.capacity = 1;
-        clientList.capacity = clientList.capacity * 2;
-        struct client *temp = realloc(clientList.clients, sizeof(struct client) * clientList.capacity);
+void addClientToClientList(struct clientList *list, struct client newClient){
+
+    if(list->size == list->capacity){
+        if(list->capacity == 0) list->capacity = 1;
+        list->capacity = list->capacity * 2;
+        struct client *temp = realloc(list->clients, sizeof(struct client) * list->capacity);
         if(temp == NULL){
             perror("realloc");
             exit(EXIT_FAILURE);
         }
         else{
-            clientList.clients = temp;
+            list->clients = temp;
         }
     }
-    clientList.clients[clientList.size].name = malloc(strlen(name) + 1);
-    strcpy(clientList.clients[clientList.size].name, name);
-    clientList.clients[clientList.size].clientFD = clientFD;
-    clientList.size++;
+
+    list->clients[list->size++] = newClient;
 }
 
 void sendClientListToClient(int clientFD){
     uint32_t payloadSize = 0;
-    payloadSize += 5 * clientList.size; 
+    payloadSize += (sizeof(uint32_t) + sizeof(int)) * clientList.size; 
     
     for(int i = 0; i < clientList.size; i++){
         payloadSize += strlen(clientList.clients[i].name);
@@ -77,5 +86,6 @@ void sendClientListToClient(int clientFD){
 }
 
 void sendRoomListToClient(int clientFD){
+    (void)clientFD;
     printf("Sent romos\n");
 }

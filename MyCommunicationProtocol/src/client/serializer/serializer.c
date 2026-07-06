@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "../../model.h"
+#include "../../shared/recv_all.h"
 #include "serializer.h"
 
 void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
@@ -18,7 +19,13 @@ void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
 
 void packetReaderInIt(struct packetReader *reader, uint32_t payloadSize, int socketFD){
     reader->buffer = malloc(payloadSize);
-    recv(socketFD, reader->buffer, payloadSize, 0);
+    if(recvAll(socketFD, reader->buffer, payloadSize) <= 0){
+        free(reader->buffer);
+        reader->buffer = NULL;
+        reader->offset = NULL;
+        reader->size = 0;
+        return;
+    }
     reader->offset = reader->buffer;
     reader->size = payloadSize;
 }

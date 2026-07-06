@@ -8,6 +8,7 @@
 #include "../protocol/protocol.h"
 #include "../../client/protocol/protocol.h"
 #include "../client manager/client_manager.h"
+#include "../../shared/recv_all.h"
 
 int createTCPIpv4Socket(){
     return socket(AF_INET, SOCK_STREAM, 0); // domain : AF_INET (IP4), type : SOCK_STREAM (TCP), protocol : 0 (Default for TCP)
@@ -24,12 +25,14 @@ struct sockaddr_in* createSocketAddress(char *ip_address, uint16_t port){
 void *receiveDataFromClient(void *arg){
     int socketFD = *(int*)arg;
     
-    struct packetHeader *header = malloc(sizeof(header));
+    struct packetHeader header = {0};
 
     while(1){
-        int byteReceived = recv(socketFD, header, sizeof(header), 0);
-        if(byteReceived > 0){
-            manageServerProtocol(*header, socketFD);
+        ssize_t byteReceived = recvAll(socketFD, &header, sizeof(header));
+        if(byteReceived == (ssize_t)sizeof(header)){
+            manageServerProtocol(header, socketFD);
+        } else {
+            break;
         }
     }
     close(socketFD);
@@ -49,7 +52,8 @@ void startAcceptingIncomingConnection(int serverSocketFD){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
         sendClientListToClient(acceptedClient->FD); // Send list before adding current client
         sendRoomListToClient(acceptedClient->FD);
-        addClientToClientList(acceptedClient->FD);
+        struct client newClient = getClientName(acceptedClient->FD);
+        addClientToClientList(&clientList, newClient);
         receiveAndManageIncomingDataOnSaperateThread(acceptedClient->FD);
     }
 }

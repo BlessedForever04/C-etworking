@@ -8,3 +8,4 @@ void packetWriteString(struct packetWriter *writer, char *data);
 
 void packetReaderInIt(struct packetReader *reader, uint32_t payloadSize, int socketFD);
 char *packetReadString(struct packetReader *reader);
+uint8_t *packetReadBytes(struct packetReader *reader, uint32_t payloadSize);

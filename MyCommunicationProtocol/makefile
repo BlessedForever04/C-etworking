@@ -1,14 +1,16 @@
 CC := gcc
 BUILD_DIR := build
-CFLAGS := -Wall -Wextra -pthread -I./src -I./src/client -I./src/client/Network -I./src/client/protocol -I./src/client/serializer -I./src/server -I./src/server/network -I./src/server/protocol -I./src/server/client\ manager
+CFLAGS := -Wall -Wextra -pthread -I./src -I./src/shared -I./src/client -I./src/client/Network -I./src/client/protocol -I./src/client/serializer -I./src/server -I./src/server/network -I./src/server/protocol -I./src/server/client\ manager
 
 CLIENT_SOURCES := \
+	src/shared/recv_all.c \
 	src/client/client.c \
 	src/client/Network/network.c \
 	src/client/protocol/protocol.c \
 	src/client/serializer/serializer.c
 
 SERVER_SOURCES := \
+	src/shared/recv_all.c \
 	src/server/server.c \
 	src/server/network/network.c \
 	src/server/protocol/protocol.c \

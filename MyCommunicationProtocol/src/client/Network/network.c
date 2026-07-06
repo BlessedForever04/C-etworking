@@ -1,9 +1,11 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include "network.h"
 #include "../../model.h"
 #include "../protocol/protocol.h"
+#include "../../shared/recv_all.h"
 
 int createTCPIpv4Socket(void){
     return socket(AF_INET, SOCK_STREAM, 0);
