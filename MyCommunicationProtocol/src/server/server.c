@@ -25,6 +25,8 @@ int main(){
         return 1;
     }
 
+    printf("Server logs\n------------------------------\n");
+
     startAcceptingIncomingConnection(serverSocketFD);
     free(serverAddressPtr);
     shutdown(serverSocketFD, SHUT_RDWR);

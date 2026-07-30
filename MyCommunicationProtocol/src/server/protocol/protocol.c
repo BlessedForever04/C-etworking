@@ -41,14 +41,12 @@ void manageNotice(void){
 // Change header.type 
 // recv payload and not chatPacket and just broadcast the header with payload (Do not parse payload on server side)
 void manageBroadcast(int socketFD, struct packetHeader header){
-    printf("Someone sent message on server\n");
     char *message = malloc(header.payloadSize);
     ssize_t byteReceived = recvAll(socketFD, message, header.payloadSize);
     
     if(byteReceived == (ssize_t)header.payloadSize){
         for(int i = 0; i < clientList.size; i++){
             if(clientList.clients[i].clientFD != socketFD){
-                printf("Left Packet sent to %d\n", i);
                 send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
                 send(clientList.clients[i].clientFD, message, header.payloadSize, 0);
             }

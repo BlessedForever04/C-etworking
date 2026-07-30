@@ -62,7 +62,7 @@ int main(){
     
     // Connecting to server socket
     int connectStatus = connect(socketFD, (struct sockaddr*)serverAddressPtr, sizeof(*serverAddressPtr)); 
-    if(connectStatus == 0) printf("Connection was successful!\n");
+    if(connectStatus == 0) printf("Connection successful!\n");
     if(connectStatus != 0){
         perror("connect");
         return 1;

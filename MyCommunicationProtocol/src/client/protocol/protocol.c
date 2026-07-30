@@ -32,7 +32,6 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
 }
 
 void handleLeftUser(struct packetHeader header, int serverSocketFD){
-    printf("Someone left the server\n");
     int *leftUser = malloc(sizeof(int));
     
     size_t receivedBytes = recvAll(serverSocketFD, leftUser, header.payloadSize);
@@ -46,7 +45,6 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
 }
 
 void removeClientFromUserList(int leftUserFD){
-    printf("Removed client from the local list\n");
     for(int i = 0; i < userList.size; i++){
         if(userList.clients[i].clientFD == leftUserFD){
             strcpy(userList.clients[i].name, userList.clients[userList.size - 1].name);
@@ -73,7 +71,6 @@ void addClientToClientList(struct clientList *list, struct client newClient){
 }
 
 void receiveAndPrintMessage(int socketFD, struct packetHeader header){
-    printf("Someone sent the message\n");
     struct packetReader reader;
     
     packetReaderInIt(&reader, header.payloadSize, socketFD);
@@ -89,15 +86,22 @@ void receiveClientList(struct packetHeader header, int socketFD){
     packetReaderInIt(&reader, header.payloadSize, socketFD);
 
     struct client user;
-    
+    printf("List of connected users:\n------------------------\n");
+    int index = 1;
     while(reader.size > 0){
         user.name = packetReadString(&reader);
-        printf("%s\n", user.name);
+        printf("%d: %s\n", index, user.name);
         uint8_t *clientFDBytes = packetReadBytes(&reader, sizeof(int));
-        memcpy(&user.clientFD, clientFDBytes, sizeof(int));
+        user.clientFD = *clientFDBytes;
         free(clientFDBytes);
         addClientToClientList(&userList, user);
+        index++;
     }
+    if(index == 1){
+        printf("No users connected to the server!\n");
+    }
+    printf("------------------------\n");
+
     free(reader.buffer); 
 }
 

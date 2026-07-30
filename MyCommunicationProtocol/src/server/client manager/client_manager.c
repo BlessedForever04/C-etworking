@@ -87,5 +87,5 @@ void sendClientListToClient(int clientFD){
 
 void sendRoomListToClient(int clientFD){
     (void)clientFD;
-    printf("Sent romos\n");
+    // Send room list to connected clients.
 }
