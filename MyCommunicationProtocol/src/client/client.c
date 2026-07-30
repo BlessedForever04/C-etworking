@@ -91,14 +91,9 @@ int main(){
         
         struct packetHeader header = {0};
         if(strcmp(message.message, "bye\n") == 0){
-            snprintf(message.message, lineSize, "%s left the chat\n", name);
-
-            header.payloadSize = strlen(message.message) + 1;
+            header.payloadSize = 0;
             header.type = PACKET_USER_LEFT;
-
             send(socketFD, &header, sizeof(header), 0); // Header
-            send(socketFD, message.message, header.payloadSize, 0); // Message payload
-
             break;
         }
 

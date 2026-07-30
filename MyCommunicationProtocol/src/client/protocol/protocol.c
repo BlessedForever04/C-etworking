@@ -8,22 +8,22 @@
 
 struct clientList userList = {NULL, 0, 0};
 
-void manageClientProtocol(struct packetHeader header, int socketFD){
+void manageClientProtocol(struct packetHeader header, int serverSocketFD){
     switch (header.type){
         case PACKET_CLIENT_LIST:
-        receiveClientList(header, socketFD);
+        receiveClientList(header, serverSocketFD);
         break;
         
         case PACKET_ROOM_LIST:
-        receiveRoomList(socketFD, header);
+        receiveRoomList(serverSocketFD, header);
         break;
         
         case PACKET_CHAT:
-        receiveAndPrintMessage(socketFD, header);
+        receiveAndPrintMessage(serverSocketFD, header);
         break;
 
         case PACKET_USER_LEFT:
-        handleLeftUser(header, socketFD);
+        handleLeftUser(header, serverSocketFD);
         break;
         
         default:
@@ -31,11 +31,11 @@ void manageClientProtocol(struct packetHeader header, int socketFD){
     }
 }
 
-void handleLeftUser(struct packetHeader header, int socketFD){
+void handleLeftUser(struct packetHeader header, int serverSocketFD){
     printf("Someone left the server\n");
     int *leftUser = malloc(sizeof(int));
     
-    size_t receivedBytes = recvAll(socketFD, leftUser, header.payloadSize);
+    size_t receivedBytes = recvAll(serverSocketFD, leftUser, header.payloadSize);
 
     if(receivedBytes <= 0){
         perror("recv");
@@ -45,11 +45,12 @@ void handleLeftUser(struct packetHeader header, int socketFD){
     free(leftUser);
 }
 
-void removeClientFromUserList(int clientFD){
+void removeClientFromUserList(int leftUserFD){
     printf("Removed client from the local list\n");
     for(int i = 0; i < userList.size; i++){
-        if(userList.clients[i].clientFD == clientFD){
-            userList.clients[i] = userList.clients[userList.size - 1];
+        if(userList.clients[i].clientFD == leftUserFD){
+            strcpy(userList.clients[i].name, userList.clients[userList.size - 1].name);
+            userList.clients[i].clientFD = userList.clients[userList.size - 1].clientFD;
             free(userList.clients[--userList.size].name);
             break;
         }

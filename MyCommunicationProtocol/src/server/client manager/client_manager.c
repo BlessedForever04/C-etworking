@@ -10,7 +10,8 @@ struct clientList clientList = {NULL, 0, 0};
 void removeClientFromClientList(int clientFD){
     for(int i = 0; i < clientList.size; i++){
         if(clientList.clients[i].clientFD == clientFD){
-            clientList.clients[i] = clientList.clients[clientList.size - 1];
+            clientList.clients[i].clientFD = clientList.clients[clientList.size - 1].clientFD;
+            strcpy(clientList.clients[i].name, clientList.clients[clientList.size - 1].name);
             free(clientList.clients[--clientList.size].name);
             break;
         }
