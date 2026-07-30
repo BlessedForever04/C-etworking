@@ -7,38 +7,9 @@
 
 #include "commands/commands.h"
 #include "serializer/serializer.h"
+#include "protocol/protocol.h"
 #include "network/network.h"
 #include "../model.h"
-
-/*
-  There are so many messed up things that has to be fixed, 
-  Main thing is that we can't transfer a struct directly which includes pointers as properties, 
-  For that we have to send each pointer individually with its payload size
-  Now this has to be done using sendAll and recvAll implementation
-
-  Have to implement serialization
-
-  Next thing to do is that we have to implement different protocols for server and client
-  header management has to be done in this phase
-
-
-Checklist
-Client:
-  1. Build packetChat (name, message)
-  2. Build payload (strlen(name), name, strlen(message), message)
-  3. Build header (packetType, payloadSize)
-  4. Send header 
-  5. Send payload
-
-Server:
-  6. Recv header
-  7. Recv Payload
-  8. ManageserverProtocol(header.type)
-
-Client:
-  9. Recv header
-  10. ManageclientProtocol(header.type);
-*/
 
 int main(){
     uint16_t port = 5000;
@@ -105,6 +76,12 @@ int main(){
             header.type = PACKET_USER_LEFT;
             send(socketFD, &header, sizeof(header), 0); // Header
             break;
+        }
+
+        if(strcmp(message.message, "/refresh\n") == 0){
+            // Only print for now because there's not better option
+            printf("\n\n");
+            printUserList(myName);
         }
 
         if(message.message[0] == '/'){
