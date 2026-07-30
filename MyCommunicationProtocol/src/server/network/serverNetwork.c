@@ -1,13 +1,12 @@
-// Socket helpers and shared packet/model declarations.
 #include <sys/socket.h>
 #include <string.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "network.h"
+#include "serverNetwork.h"
 #include "../protocol/protocol.h"
 #include "../../client/protocol/protocol.h"
-#include "../client manager/client_manager.h"
+#include "../client_manager/client_manager.h"
 #include "../../shared/recv_all.h"
 
 int createTCPIpv4Socket(){
@@ -50,10 +49,10 @@ void receiveAndManageIncomingDataOnSaperateThread(int clientFD){
 void startAcceptingIncomingConnection(int serverSocketFD){
     while(1){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
-        sendClientListToClient(acceptedClient->FD); // Send list before adding current client
-        sendRoomListToClient(acceptedClient->FD);
         struct client newClient = getClientName(acceptedClient->FD);
         addClientToClientList(&clientList, newClient);
+        sendClientListToClient(acceptedClient->FD); // Send list before adding current client
+        sendRoomListToClient(acceptedClient->FD);
         receiveAndManageIncomingDataOnSaperateThread(acceptedClient->FD);
     }
 }

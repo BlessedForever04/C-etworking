@@ -61,7 +61,8 @@ void addClientToClientList(struct clientList *list, struct client newClient){
 
 void sendClientListToClient(int clientFD){
     uint32_t payloadSize = 0;
-    payloadSize += (sizeof(uint32_t) + sizeof(int)) * clientList.size; 
+    //            (clientNameLen    +    socketFD) * number of connected clients
+    payloadSize = (sizeof(uint32_t) + sizeof(int)) * clientList.size; 
     
     for(int i = 0; i < clientList.size; i++){
         payloadSize += strlen(clientList.clients[i].name);

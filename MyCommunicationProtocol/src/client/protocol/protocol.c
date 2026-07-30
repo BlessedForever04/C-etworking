@@ -8,10 +8,10 @@
 
 struct clientList userList = {NULL, 0, 0};
 
-void manageClientProtocol(struct packetHeader header, int serverSocketFD){
+void manageClientProtocol(struct packetHeader header, int serverSocketFD, char *myName){
     switch (header.type){
         case PACKET_CLIENT_LIST:
-        receiveClientList(header, serverSocketFD);
+        receiveUserList(header, serverSocketFD, myName);
         break;
         
         case PACKET_ROOM_LIST:
@@ -74,35 +74,44 @@ void receiveAndPrintMessage(int socketFD, struct packetHeader header){
     struct packetReader reader;
     
     packetReaderInIt(&reader, header.payloadSize, socketFD);
+
+    // Just have to receive it
+    uint8_t *destinationAndSourceFD = packetReadBytes(&reader, sizeof(int));
+    destinationAndSourceFD = packetReadBytes(&reader, sizeof(int));
     char *sender = packetReadString(&reader);
     char *message = packetReadString(&reader);
     
-    printf("%s: %s", sender, message);
+    if(strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
 }
 
-void receiveClientList(struct packetHeader header, int socketFD){
+void receiveUserList(struct packetHeader header, int socketFD, char *myName){
     // Receiving the users (clientList)
     struct packetReader reader; 
     packetReaderInIt(&reader, header.payloadSize, socketFD);
 
     struct client user;
-    printf("List of connected users:\n------------------------\n");
-    int index = 1;
     while(reader.size > 0){
         user.name = packetReadString(&reader);
-        printf("%d: %s\n", index, user.name);
         uint8_t *clientFDBytes = packetReadBytes(&reader, sizeof(int));
         user.clientFD = *clientFDBytes;
         free(clientFDBytes);
         addClientToClientList(&userList, user);
-        index++;
     }
-    if(index == 1){
+    
+    free(reader.buffer); 
+    printUserList(myName);
+}
+
+void printUserList(char *myName){
+    printf("List of connected users:\n------------------------\n");
+    for(int i = 0; i < userList.size; i++){
+        if(strcmp(myName, userList.clients[i].name) == 0) continue;
+        printf("%d: %s\n", i+1, userList.clients[i].name);
+    }
+    if(userList.size == 1){
         printf("No users connected to the server!\n");
     }
     printf("------------------------\n");
-
-    free(reader.buffer); 
 }
 
 void receiveRoomList(int socketFD, struct packetHeader header){

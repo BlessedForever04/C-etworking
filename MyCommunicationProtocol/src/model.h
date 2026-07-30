@@ -36,7 +36,7 @@ typedef enum {
     PACKET_UNMUTE, // Only header
 
     // File
-    PACKET_FILE, // Header + (char *filename + FILE *data)
+    PACKET_FILE, // Header + (uint32_t filenameSize + char *filename + uint32_t dataSize + uint8_t *data)
 
     // VOICE CHAT
     PACKET_VOICE_JOIN, 
@@ -56,6 +56,11 @@ struct packetWriter{
     uint8_t *buffer;
     uint32_t size;
     uint32_t capacity;
+};
+
+struct pair{
+    int socketFD;
+    char *name;
 };
 
 struct packetReader{

@@ -4,6 +4,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
+
+#include "commands/commands.h"
 #include "serializer/serializer.h"
 #include "network/network.h"
 #include "../model.h"
@@ -42,18 +44,18 @@ int main(){
     uint16_t port = 5000;
 
     // Client's name
-    char *name = NULL;
+    char *myName = NULL;
     printf("Enter your name: ");
     size_t lineSize = 0;
-    ssize_t charCount = getline(&name, &lineSize, stdin);
+    ssize_t charCount = getline(&myName, &lineSize, stdin);
     
     if(charCount == -1){
         perror("getline");
-        free(name);
+        free(myName);
         return 1;
     }
     
-    name[charCount-1] = '\0';
+    myName[charCount-1] = '\0';
     lineSize = 0;
 
     // Socket and address creation
@@ -69,52 +71,52 @@ int main(){
     }
     struct packetHeader introHeader;
     introHeader.type = PACKET_INTRO;
-    introHeader.payloadSize = strlen(name) + 1;
+    introHeader.payloadSize = strlen(myName) + 1;
+
+    struct pair socketAndName;
+    socketAndName.name = malloc(sizeof(myName) + 1);
+    strcpy(socketAndName.name, myName);
+    socketAndName.socketFD = socketFD;
+
+    // Thread for receiving data from server and printing on terminal
+    pthread_t receiveThread;
+    pthread_create(&receiveThread, NULL, receiveDataFromServer, &socketAndName);
+    int mySocketFD = getMySocketFD(myName);
 
     // Sending header for name
     send(socketFD, &introHeader, sizeof(introHeader), 0);
     
     // Sending client name to server (Client is added in the clients list)
-    send(socketFD, name, introHeader.payloadSize, 0);    
-
-    // Thread for receiving data from server and printing on terminal
-    pthread_t receiveThread;
-    pthread_create(&receiveThread, NULL, receiveDataFromServer, &socketFD);
+    send(socketFD, myName, introHeader.payloadSize, 0);    
     
     // Writing message to server
     struct messagePacket message;
-    message.sender = malloc(strlen(name) + 1);
-    snprintf(message.sender, strlen(name) + 1, "%s", name);
+    message.sender = malloc(strlen(myName) + 1);
+    snprintf(message.sender, strlen(myName) + 1, "%s", myName);
+
+    // Main loop
     while(1){
         // Client writing message
         charCount = getline(&message.message, &lineSize, stdin);
         
         struct packetHeader header = {0};
-        if(strcmp(message.message, "bye\n") == 0){
+        if(strcmp(message.message, "/exit\n") == 0){
             header.payloadSize = 0;
             header.type = PACKET_USER_LEFT;
             send(socketFD, &header, sizeof(header), 0); // Header
             break;
         }
 
-        uint32_t payloadSize = 4 + strlen(name) + 4 + strlen(message.message);
-        // Building packet header
-        header.payloadSize = payloadSize;
-        header.type = PACKET_CHAT;
-        
-        // Serialization (building payload)
-        struct packetWriter writer;
-        packetWriterInIt(&writer, payloadSize);
-        packetWriteString(&writer, name);
-        packetWriteString(&writer, message.message);
-
-        // Sending packet header
-        send(socketFD, &header, sizeof(header), 0);
-        // Sending message packet
-        send(socketFD, writer.buffer, writer.size, 0); 
+        if(message.message[0] == '/'){
+            manageCommands(message.message, socketFD, myName, mySocketFD);
+            continue;
+        }
+        else{
+          printf("Invalid input, read '/help'\n");
+        }
     }
 
-    free(name);
+    free(myName);
     free(message.message);
     free(message.sender);
     close(socketFD);

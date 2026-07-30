@@ -2,7 +2,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include "network/network.h"
+#include "network/serverNetwork.h"
 
 int main(){
     uint16_t port = 5000;
@@ -30,5 +30,7 @@ int main(){
     startAcceptingIncomingConnection(serverSocketFD);
     free(serverAddressPtr);
     shutdown(serverSocketFD, SHUT_RDWR);
+
+    printf("------------------------------\n");
     return 0;
 }
