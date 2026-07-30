@@ -23,7 +23,7 @@ void manageClientProtocol(struct packetHeader header, int socketFD){
         break;
 
         case PACKET_USER_LEFT:
-        handleLeftUser(socketFD);
+        handleLeftUser(header, socketFD);
         break;
         
         default:
@@ -31,10 +31,12 @@ void manageClientProtocol(struct packetHeader header, int socketFD){
     }
 }
 
-void handleLeftUser(int socketFD){
+void handleLeftUser(struct packetHeader header, int socketFD){
     printf("Someone left the server\n");
     int *leftUser = malloc(sizeof(int));
-    int receivedBytes = recv(socketFD, leftUser, sizeof(int), 0);
+    
+    size_t receivedBytes = recvAll(socketFD, leftUser, header.payloadSize);
+
     if(receivedBytes <= 0){
         perror("recv");
         exit(EXIT_FAILURE);
