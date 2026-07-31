@@ -48,7 +48,7 @@ int main(){
 
     // Can't pass multiple variables via function used for pthread so coupling name and socketFD
     struct pair socketAndName;
-    socketAndName.name = malloc(sizeof(myName) + 1);
+    socketAndName.name = malloc(strlen(myName) + 1);
     strcpy(socketAndName.name, myName);
     socketAndName.socketFD = socketFD;
 
@@ -70,7 +70,7 @@ int main(){
 
     // Main loop
     while(1){
-        // Client writing message
+        // Client writing message in main external loop
         charCount = getline(&message.message, &lineSize, stdin);
         
         struct packetHeader header = {0};

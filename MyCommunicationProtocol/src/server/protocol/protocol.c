@@ -39,25 +39,17 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
 }
 
 void managePeerChat(struct packetHeader header, int sourceClientFD){
-    printf("Message by %d\n", sourceClientFD);
     struct packetReader reader;
-    packetReaderInIt(&reader, sizeof(int), sourceClientFD);
+    // Reading the received packet from source client
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
 
-    uint8_t *temp = packetReadBytes(&reader, sizeof(int));
+    uint8_t *pDestinationFD = packetReadBytes(&reader, sizeof(int));
     int destinationFD;
-    memcpy(&destinationFD, temp, sizeof(destinationFD));
+    memcpy(&destinationFD, pDestinationFD, sizeof(destinationFD));
 
-    free(temp);
-
-    uint8_t *buffer = malloc(header.payloadSize);
-    size_t receivedBytes = recvAll(sourceClientFD, buffer, header.payloadSize);
-
-    if(receivedBytes <= 0){
-        perror("recv");
-        exit(EXIT_FAILURE);
-    }
-
-    send(destinationFD, buffer, header.payloadSize, 0);
+    send(destinationFD, &header, sizeof(header), 0);
+    send(destinationFD, reader.buffer, header.payloadSize, 0);
+    free(pDestinationFD);
 }
 
 void manageLeftClient(int sourceClientFD){

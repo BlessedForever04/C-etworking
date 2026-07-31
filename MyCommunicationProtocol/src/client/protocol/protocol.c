@@ -106,14 +106,14 @@ void receiveAndPrintMessage(struct packetHeader header, int socketFD){
     packetReaderInIt(&reader, header.payloadSize, socketFD);
 
     // Just have to receive it
-    uint8_t *tempFD = packetReadBytes(&reader, sizeof(int));
-    tempFD = packetReadBytes(&reader, sizeof(int));
-    char *sender = packetReadString(&reader);
-    char *message = packetReadString(&reader);
+    uint8_t *tempFD = packetReadBytes(&reader, sizeof(int)); // Receiving destinationFD
+    tempFD = packetReadBytes(&reader, sizeof(int)); // Receiving sourceFD
+    char *sender = packetReadString(&reader); // Sender's name
+    char *message = packetReadString(&reader); // Sender's message
     
     free(tempFD);
     
-    if(strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
+    if(currentCommunication != NULL && strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
 }
 
 void receiveUserList(struct packetHeader header, int socketFD, char *myName){

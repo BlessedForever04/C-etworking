@@ -22,7 +22,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
     // Chatting with other users on server (peer to peer communication)
     for(int i = 0; i < userList.size; i++){
         if(strcmp(commandBuffer+1, userList.clients[i].name) == 0){
-            currentCommunication = malloc(strlen(userList.clients[i].name));
+            currentCommunication = malloc(strlen(userList.clients[i].name) + 1);
             strcpy(currentCommunication, userList.clients[i].name);
 
             printf("-- %s --\n--------------\n", userList.clients[i].name);
