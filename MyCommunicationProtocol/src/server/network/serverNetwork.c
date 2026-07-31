@@ -23,14 +23,14 @@ struct sockaddr_in* createSocketAddress(char *ip_address, uint16_t port){
 
 void *receiveDataFromClient(void *arg){
     int socketFD = *(int*)arg;
-    
     struct packetHeader header = {0};
 
     while(1){
         ssize_t byteReceived = recvAll(socketFD, &header, sizeof(header));
         if(byteReceived == (ssize_t)sizeof(header)){
             manageServerProtocol(header, socketFD);
-        } else {
+        } 
+        else {
             break;
         }
     }
@@ -49,10 +49,6 @@ void receiveAndManageIncomingDataOnSaperateThread(int clientFD){
 void startAcceptingIncomingConnection(int serverSocketFD){
     while(1){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
-        struct client newClient = getClientName(acceptedClient->FD);
-        addClientToClientList(&clientList, newClient);
-        sendClientListToClient(acceptedClient->FD); // Send list before adding current client
-        sendRoomListToClient(acceptedClient->FD);
         receiveAndManageIncomingDataOnSaperateThread(acceptedClient->FD);
     }
 }

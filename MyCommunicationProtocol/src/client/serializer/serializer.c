@@ -84,6 +84,9 @@ void packetWriteBytes(struct packetWriter *writer, void *data, size_t size){
     writer->size += size;
 }
 
+/* 
+    String in buffer is written as : string len + string
+*/
 void packetWriteString(struct packetWriter *writer, char *data){
     bool resized = false;
     uint32_t size = (uint32_t)strlen(data);
@@ -106,6 +109,6 @@ void packetWriteString(struct packetWriter *writer, char *data){
     currentBufferLocation += sizeof(size);
     memcpy(currentBufferLocation, data, size);
 
-    writer->size += sizeof(size);
-    writer->size += size;
+    writer->size += sizeof(size); // Size of the string
+    writer->size += size;         // Actual string
 }

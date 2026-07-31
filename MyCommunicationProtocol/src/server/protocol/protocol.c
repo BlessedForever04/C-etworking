@@ -1,6 +1,8 @@
-#include "../../model.h"
 #include <stdio.h>
+#include <string.h>
+
 #include "protocol.h"
+#include "../../model.h"
 #include "../client_manager/client_manager.h"
 #include "../../shared/recv_all.h"
 #include "../../client/serializer/serializer.h"
@@ -15,16 +17,37 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         manageLeftClient(sourceClientFD);
         break;
 
+    case PACKET_INTRO:
+        manageNewClient(header, sourceClientFD);
+        break;
+        
     default:
         break;
     }
 }
 
+void manageNewClient(struct packetHeader header, int sourceClientFD){
+    struct client newClient = getClientName(header, sourceClientFD);
+    if(newClient.name == NULL){
+        return;
+    }
+    introduceNewClient(newClient);
+    addClientToClientList(&clientList, newClient);
+    sendClientListToClient(sourceClientFD);
+    sendRoomListToClient(sourceClientFD);
+    free(newClient.name);
+}
+
 void managePeerChat(struct packetHeader header, int sourceClientFD){
+    printf("Message by %d\n", sourceClientFD);
     struct packetReader reader;
     packetReaderInIt(&reader, sizeof(int), sourceClientFD);
 
-    uint8_t *destinationFD = packetReadBytes(&reader, sizeof(int));
+    uint8_t *temp = packetReadBytes(&reader, sizeof(int));
+    int destinationFD;
+    memcpy(&destinationFD, temp, sizeof(destinationFD));
+
+    free(temp);
 
     uint8_t *buffer = malloc(header.payloadSize);
     size_t receivedBytes = recvAll(sourceClientFD, buffer, header.payloadSize);
@@ -34,7 +57,7 @@ void managePeerChat(struct packetHeader header, int sourceClientFD){
         exit(EXIT_FAILURE);
     }
 
-    send(*destinationFD, buffer, header.payloadSize, 0);
+    send(destinationFD, buffer, header.payloadSize, 0);
 }
 
 void manageLeftClient(int sourceClientFD){

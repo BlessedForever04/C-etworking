@@ -40,10 +40,13 @@ int main(){
         perror("connect");
         return 1;
     }
+
+    // Introduction header
     struct packetHeader introHeader;
     introHeader.type = PACKET_INTRO;
     introHeader.payloadSize = strlen(myName) + 1;
 
+    // Can't pass multiple variables via function used for pthread so coupling name and socketFD
     struct pair socketAndName;
     socketAndName.name = malloc(sizeof(myName) + 1);
     strcpy(socketAndName.name, myName);
@@ -76,12 +79,6 @@ int main(){
             header.type = PACKET_USER_LEFT;
             send(socketFD, &header, sizeof(header), 0); // Header
             break;
-        }
-
-        if(strcmp(message.message, "/refresh\n") == 0){
-            // Only print for now because there's not better option
-            printf("\n\n");
-            printUserList(myName);
         }
 
         if(message.message[0] == '/'){

@@ -1,6 +1,8 @@
 CC := gcc
 BUILD_DIR := build
 CFLAGS := \
+	-g \
+	-O0 \
 	-Wall \
 	-Wextra \
 	-pthread \

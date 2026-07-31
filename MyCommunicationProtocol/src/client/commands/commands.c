@@ -6,6 +6,12 @@
 #include "../serializer/serializer.h"
 
 void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int mySocketFD){
+    // Main loop commands
+    if(strcmp(commandBuffer, "/refresh\n") == 0){
+        printf("\n\n");
+        printUserList(myName);
+        return;
+    }
 
     commandBuffer[strlen(commandBuffer) - 1] = '\0';
     /*
@@ -15,12 +21,12 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
     
     // Chatting with other users on server (peer to peer communication)
     for(int i = 0; i < userList.size; i++){
-        printf("In search of your love..\n");
         if(strcmp(commandBuffer+1, userList.clients[i].name) == 0){
-            printf("Found your love..\n");
-            currentCommunication = malloc(sizeof(userList.clients[i].name));
+            currentCommunication = malloc(strlen(userList.clients[i].name));
             strcpy(currentCommunication, userList.clients[i].name);
+
             printf("-- %s --\n--------------\n", userList.clients[i].name);
+
             struct messagePacket message;
             size_t lineSize = 0;
 
@@ -52,6 +58,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
                 
                 // Serialization (building payload)
                 struct packetWriter writer;
+                // Buffer initialization
                 packetWriterInIt(&writer, payloadSize);
                 // DestinationFD
                 packetWriteBytes(&writer, &userList.clients[i].clientFD, sizeof(int));
@@ -66,14 +73,11 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
                 send(serverSocketFD, &header, sizeof(header), 0);
                 // Sending message packet
                 send(serverSocketFD, writer.buffer, writer.size, 0); 
+                free(writer.buffer);
             }
-
             return;
         }
-        else{
-            printf("Comparing %s with %s\n", commandBuffer, userList.clients[i].name);
-        }
-    }
-
+    } 
     // same 'for loop' for group chat
-}   
+    printf("Invalid input, read '/help'\n");
+}

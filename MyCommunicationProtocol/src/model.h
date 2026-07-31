@@ -20,6 +20,7 @@ typedef enum {
     PACKET_INTRO, // Only for sending name's payload size while accepting the client
 
     // User events
+    PACKET_USER_JOINED_SERVER,
     PACKET_USER_JOINED, // Header + name
     PACKET_USER_LEFT, // Header
 

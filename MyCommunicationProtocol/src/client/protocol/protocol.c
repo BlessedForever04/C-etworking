@@ -15,20 +15,37 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD, char *
         break;
         
         case PACKET_ROOM_LIST:
-        receiveRoomList(serverSocketFD, header);
+        receiveRoomList(header, serverSocketFD);
         break;
         
         case PACKET_CHAT:
-        receiveAndPrintMessage(serverSocketFD, header);
+        receiveAndPrintMessage(header, serverSocketFD);
         break;
 
         case PACKET_USER_LEFT:
         handleLeftUser(header, serverSocketFD);
         break;
+
+        case PACKET_USER_JOINED_SERVER:
+        addJoinedUserToUserList(header, serverSocketFD);
         
         default:
         break;
     }
+}
+
+void addJoinedUserToUserList(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+    struct client newUser;
+    uint8_t *fd = packetReadBytes(&reader, sizeof(int));
+    memcpy(&newUser.clientFD, fd, sizeof(newUser.clientFD));
+    newUser.name = packetReadString(&reader);
+
+    addClientToClientList(&userList, newUser);
+    free(reader.buffer);
+    free(fd);
+    free(newUser.name);
 }
 
 void handleLeftUser(struct packetHeader header, int serverSocketFD){
@@ -59,6 +76,12 @@ void addClientToClientList(struct clientList *list, struct client newClient){
     if(list->size == list->capacity){
         if(list->capacity == 0) list->capacity = 1;
         list->capacity = list->capacity * 2;
+
+        /*
+            Here list->clients is not directly used for reallocation bcz of the failure risk, its better practice to check temp first and then allocate if 
+            everything is good 
+        */
+
         struct client *temp = realloc(list->clients, sizeof(struct client) * list->capacity);
         if(temp == NULL){
             perror("realloc");
@@ -67,19 +90,28 @@ void addClientToClientList(struct clientList *list, struct client newClient){
         list->clients = temp;
     }
 
-    list->clients[list->size++] = newClient;
+    list->clients[list->size].clientFD = newClient.clientFD;
+    list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
+    if(list->clients[list->size].name == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(list->clients[list->size].name, newClient.name);
+    list->size++;
 }
 
-void receiveAndPrintMessage(int socketFD, struct packetHeader header){
+void receiveAndPrintMessage(struct packetHeader header, int socketFD){
     struct packetReader reader;
     
     packetReaderInIt(&reader, header.payloadSize, socketFD);
 
     // Just have to receive it
-    uint8_t *destinationAndSourceFD = packetReadBytes(&reader, sizeof(int));
-    destinationAndSourceFD = packetReadBytes(&reader, sizeof(int));
+    uint8_t *tempFD = packetReadBytes(&reader, sizeof(int));
+    tempFD = packetReadBytes(&reader, sizeof(int));
     char *sender = packetReadString(&reader);
     char *message = packetReadString(&reader);
+    
+    free(tempFD);
     
     if(strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
 }
@@ -92,10 +124,11 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
     struct client user;
     while(reader.size > 0){
         user.name = packetReadString(&reader);
-        uint8_t *clientFDBytes = packetReadBytes(&reader, sizeof(int));
-        user.clientFD = *clientFDBytes;
-        free(clientFDBytes);
+        uint8_t *fd = packetReadBytes(&reader, sizeof(int));
+        memcpy(&user.clientFD, fd, sizeof(user.clientFD));
         addClientToClientList(&userList, user);
+        free(user.name);
+        free(fd);
     }
     
     free(reader.buffer); 
@@ -104,17 +137,17 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
 
 void printUserList(char *myName){
     printf("List of connected users:\n------------------------\n");
+    int index = 1;
     for(int i = 0; i < userList.size; i++){
         if(strcmp(myName, userList.clients[i].name) == 0) continue;
-        printf("%d: %s\n", i+1, userList.clients[i].name);
+        printf("%d: %s\n", index, userList.clients[i].name);
+        index++;
     }
-    if(userList.size == 1){
-        printf("No users connected to the server!\n");
-    }
+    // }
     printf("------------------------\n");
 }
 
-void receiveRoomList(int socketFD, struct packetHeader header){
+void receiveRoomList(struct packetHeader header, int socketFD){
     (void)socketFD;
     (void)header;
 }

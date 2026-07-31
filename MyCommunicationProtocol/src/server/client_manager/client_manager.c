@@ -18,13 +18,7 @@ void removeClientFromClientList(int clientFD){
     }
 }
 
-struct client getClientName(int clientFD){
-    struct packetHeader header;
-    if(recvAll(clientFD, &header, sizeof(header)) != (ssize_t)sizeof(header)){
-        struct client newClient = {NULL, 0};
-        return newClient;
-    }
-    
+struct client getClientName(struct packetHeader header, int clientFD){
     struct client newClient = {NULL, 0};
 
     newClient.name = malloc(header.payloadSize + 1);
@@ -35,6 +29,7 @@ struct client getClientName(int clientFD){
     ssize_t byteReceived = recvAll(clientFD, newClient.name, header.payloadSize);
     if(byteReceived != (ssize_t)header.payloadSize){
         free(newClient.name);
+        newClient.name = NULL;
         return newClient;
     }
     newClient.name[header.payloadSize] = '\0';
@@ -56,7 +51,14 @@ void addClientToClientList(struct clientList *list, struct client newClient){
         }
     }
 
-    list->clients[list->size++] = newClient;
+    list->clients[list->size].clientFD = newClient.clientFD;
+    list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
+    if(list->clients[list->size].name == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(list->clients[list->size].name, newClient.name);
+    list->size++;
 }
 
 void sendClientListToClient(int clientFD){
@@ -89,4 +91,23 @@ void sendClientListToClient(int clientFD){
 void sendRoomListToClient(int clientFD){
     (void)clientFD;
     // Send room list to connected clients.
+}
+
+void introduceNewClient(struct client newClient){
+    struct packetHeader header;
+    header.type = PACKET_USER_JOINED_SERVER;
+    //                   SocketFD    + len         + name.len
+    header.payloadSize = sizeof(int) + sizeof(int) + strlen(newClient.name);
+
+    struct packetWriter writer;
+    packetWriterInIt(&writer, header.payloadSize);                   // Creating buffer
+    packetWriteBytes(&writer, &newClient.clientFD, sizeof(int));     // Storing socket FD
+    packetWriteString(&writer, newClient.name);                      // Storing name
+
+    for(int i = 0; i < clientList.size; i++){
+        // sending header
+        send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
+        // Sending buffer
+        send(clientList.clients[i].clientFD, writer.buffer, header.payloadSize, 0);
+    }
 }
