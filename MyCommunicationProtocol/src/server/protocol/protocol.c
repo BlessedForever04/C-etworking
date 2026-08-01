@@ -59,11 +59,9 @@ void manageLeftClient(int sourceClientFD){
     header.type = PACKET_USER_LEFT;
     header.payloadSize = sizeof(int);
 
-    int FD = sourceClientFD;
-
     for(int i = 0; i < clientList.size; i++){
         send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
-        send(clientList.clients[i].clientFD, &FD, sizeof(int), 0);
+        send(clientList.clients[i].clientFD, &sourceClientFD, sizeof(int), 0);
     }
 }
 
