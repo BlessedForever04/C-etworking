@@ -6,7 +6,7 @@
 #include "../../shared/recv_all.h"
 #include "serializer.h"
 
-char *currentCommunication;
+char *currentCommunication = NULL;
 
 void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
     writer->size = 0;
