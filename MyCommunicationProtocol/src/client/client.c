@@ -5,11 +5,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#include "commands/commandManager.h"
-#include "../shared/serializer.h"
+#include "commands/command_manager/commandManager.h"
+#include "../shared/serializer/serializer.h"
 #include "protocol/protocol.h"
 #include "network/network.h"
-#include "../model.h"
+#include "../shared/model.h"
 
 int main(){
     uint16_t port = 5000;
@@ -74,7 +74,7 @@ int main(){
         charCount = getline(&message.message, &lineSize, stdin);
         
         struct packetHeader header = {0};
-        if(strcmp(message.message, "/quit\n") == 0 || strcmp(message.message, "q\n") == 0){
+        if(strcmp(message.message, "/quit\n") == 0 || strcmp(message.message, "/q\n") == 0){
             header.payloadSize = 0;
             header.type = PACKET_USER_LEFT;
             send(socketFD, &header, sizeof(header), 0); // Header

@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "commandManager.h"
+#include "../command_manager/commandManager.h"
 #include "mainCommands.h"
-#include "../../model.h"
-#include "../../shared/serializer.h"
-#include "../protocol/protocol.h"
+#include "../../../shared/model.h"
+#include "../../../shared/serializer/serializer.h"
+#include "../../protocol/protocol.h"
+#include "../../shared_list/shared_list.h"
 
 void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverSocketFD){
     free(currentCommunication);

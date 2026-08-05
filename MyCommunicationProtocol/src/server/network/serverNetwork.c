@@ -7,7 +7,7 @@
 #include "../protocol/protocol.h"
 #include "../../client/protocol/protocol.h"
 #include "../client_manager/client_manager.h"
-#include "../../shared/recv_all.h"
+#include "../../shared/recv_all/recv_all.h"
 
 int createTCPIpv4Socket(){
     return socket(AF_INET, SOCK_STREAM, 0); // domain : AF_INET (IP4), type : SOCK_STREAM (TCP), protocol : 0 (Default for TCP)

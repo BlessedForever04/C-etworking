@@ -2,12 +2,13 @@
 #include <string.h>
 
 #include "protocol.h"
-#include "../../model.h"
+#include "../../shared/model.h"
 #include "../client_manager/client_manager.h"
-#include "../../shared/recv_all.h"
-#include "../../shared/serializer.h"
+#include "../../shared/recv_all/recv_all.h"
+#include "../../shared/serializer/serializer.h"
+#include "../../shared/group/group.h"
+#include "../shared_list/shared_list.h"
 
-struct groupList localRoomList = {NULL, 0, 0};
 
 void manageServerProtocol(struct packetHeader header, int sourceClientFD){
     switch (header.type){
@@ -22,10 +23,41 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
     case PACKET_INTRO:
         manageNewClient(header, sourceClientFD);
         break;
+
+    case PACKET_CREATE_ROOM:
+        manageNewGroup(header, sourceClientFD); 
+        break;
         
     default:
         break;
     }
+}
+
+void manageNewGroup(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+
+    struct group newGroup;
+    newGroup.name = packetReadString(&reader); // Group name
+    newGroup.description = packetReadString(&reader); // Group description
+    newGroup.admin.name = packetReadString(&reader); // Group admin's name
+    newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int)); // Group admin's FD
+
+    // Adding group in local list
+    addGroupInGroupList(roomList, newGroup);
+    // Broadcasting newGroup
+    for(size_t i = 0; i < clientList.size; i++){
+        if(clientList.clients[i].FD != sourceClientFD){
+            send(clientList.clients[i].FD, &header, sizeof(header), 0);
+            send(clientList.clients[i].FD, reader.buffer, header.payloadSize, 0);
+        }
+    }
+
+    // freeing memory
+    free(reader.buffer);
+    free(newGroup.name);
+    free(newGroup.description);
+    free(newGroup.admin.name);
 }
 
 void manageNewClient(struct packetHeader header, int sourceClientFD){
@@ -34,7 +66,7 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
         return;
     }
     introduceNewClient(newClient);
-    addClientToClientList(&clientList, newClient);
+    addClientInClientList(&clientList, newClient);
     sendClientListToClient(sourceClientFD);
     sendRoomListToClient(sourceClientFD);
     free(newClient.name);
@@ -61,7 +93,7 @@ void manageLeftClient(int sourceClientFD){
     header.type = PACKET_USER_LEFT;
     header.payloadSize = sizeof(int);
 
-    for(int i = 0; i < clientList.size; i++){
+    for(size_t i = 0; i < clientList.size; i++){
         send(clientList.clients[i].FD, &header, sizeof(header), 0);
         send(clientList.clients[i].FD, &sourceClientFD, sizeof(int), 0);
     }
@@ -78,7 +110,7 @@ void manageBroadcast(int sourceClientFD, struct packetHeader header){
     ssize_t byteReceived = recvAll(sourceClientFD, message, header.payloadSize);
     
     if(byteReceived == (ssize_t)header.payloadSize){
-        for(int i = 0; i < clientList.size; i++){
+        for(size_t i = 0; i < clientList.size; i++){
             if(clientList.clients[i].FD != sourceClientFD){
                 send(clientList.clients[i].FD, &header, sizeof(header), 0);
                 send(clientList.clients[i].FD, message, header.payloadSize, 0);

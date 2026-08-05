@@ -6,9 +6,9 @@
 #include <stdio.h>
 
 #include "network.h"
-#include "../../model.h"
+#include "../../shared/model.h"
 #include "../protocol/protocol.h"
-#include "../../shared/recv_all.h"
+#include "../../shared/recv_all/recv_all.h"
 
 int createTCPIpv4Socket(void){
     return socket(AF_INET, SOCK_STREAM, 0);
@@ -40,7 +40,7 @@ void *receiveDataFromServer(void *arg){ // here the function has to be of *funct
 }
 
 int getMySocketFD(char *myName){
-    for(int i = 0; i < userList.size; i++){
+    for(size_t i = 0; i < userList.size; i++){
         if(strcmp(userList.clients[i].name, myName) == 0) return userList.clients[i].FD;
     }
     return 69;

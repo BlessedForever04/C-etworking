@@ -1,13 +1,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "mainCommands.h"
+#include "../main_commands/mainCommands.h"
 #include "commandManager.h"
-#include "../../shared/group.h"
-#include "../protocol/protocol.h"
-#include "../../shared/serializer.h"
-
-struct groupList localGroupList = {NULL, 0, 0};
+#include "../../../shared/group/group.h"
+#include "../../protocol/protocol.h"
+#include "../../../shared/serializer/serializer.h"
+#include "../../shared_list/shared_list.h"
 
 void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int mySocketFD){
     uint8_t isNotFound = 1;
@@ -35,7 +34,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
         if(strcmp(argv[0], "/refresh") == 0){
             printf("\n");
             printUserList(myName);
-            printGruopList(localGroupList);
+            printGroupList(groupList);
             return;
         }
     }
@@ -43,7 +42,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
     if(argc == 2){
         if(strcmp(argv[0], "/open") == 0){
             // Chatting with other users on server (peer to peer communication)
-            for(int i = 0; i < userList.size; i++){
+            for(size_t i = 0; i < userList.size; i++){
                 if(strcmp(argv[1], userList.clients[i].name) == 0){
                     isNotFound = 0;
                     chatWithUser(&userList.clients[i], myName, mySocketFD, serverSocketFD);
@@ -55,9 +54,10 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
         }
 
         if(strcmp(argv[1], "create_group") == 0){
-            // implement creation of group
+            // creation of group
             struct group newGroup = createGroup(mySocketFD, myName);
-            addGroupInGroupList(localGroupList, newGroup);
+            addGroupInGroupList(groupList, newGroup);
+            shareNewGroupDetailsToServer(newGroup, serverSocketFD);
         }
 
         if(strcmp(argv[1], "delete_group") == 0){

@@ -91,8 +91,8 @@ struct acceptedConnection{
 
 struct clientList{    
     struct client *clients;
-    int size;
-    int capacity;
+    size_t size;
+    size_t capacity;
 };
 
 struct client{

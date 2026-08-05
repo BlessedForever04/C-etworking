@@ -1,12 +1,12 @@
-#include "../../model.h"
+#include "../../shared/model.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
 #include "protocol.h"
-#include "../../shared/serializer.h"
-#include "../../shared/recv_all.h"
-
-struct clientList userList = {NULL, 0, 0};
+#include "../../shared/serializer/serializer.h"
+#include "../../shared/recv_all/recv_all.h"
+#include "../../shared/group/group.h"
+#include "../shared_list/shared_list.h"
 
 void manageClientProtocol(struct packetHeader header, int serverSocketFD, char *myName){
     switch (header.type){
@@ -27,14 +27,39 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD, char *
         break;
 
         case PACKET_USER_JOINED_SERVER:
-        addJoinedUserToUserList(header, serverSocketFD);
+        addJoinedUserInUserList(header, serverSocketFD);
+        break;
         
+        case PACKET_CREATE_ROOM:
+        manageNewGroup(header, serverSocketFD);
+        break;
+
         default:
+        // Default case handling
         break;
     }
 }
 
-void addJoinedUserToUserList(struct packetHeader header, int serverSocketFD){
+void manageNewGroup(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+    
+    struct group newGroup;
+    newGroup.name = packetReadString(&reader);
+    newGroup.description = packetReadString(&reader);
+    newGroup.admin.name = packetReadString(&reader);
+    newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int));
+
+    addGroupInGroupList(groupList, newGroup);
+
+    // freeing memory
+    free(newGroup.name);
+    free(newGroup.description);
+    free(newGroup.admin.name);
+    free(reader.buffer);
+}
+
+void addJoinedUserInUserList(struct packetHeader header, int serverSocketFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
     struct client newUser;
@@ -42,7 +67,7 @@ void addJoinedUserToUserList(struct packetHeader header, int serverSocketFD){
     memcpy(&newUser.FD, fd, sizeof(newUser.FD));
     newUser.name = packetReadString(&reader);
 
-    addClientToClientList(&userList, newUser);
+    addClientInClientList(&userList, newUser);
     free(reader.buffer);
     free(fd);
     free(newUser.name);
@@ -62,7 +87,7 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
 }
 
 void removeClientFromUserList(int leftUserFD){
-    for(int i = 0; i < userList.size; i++){
+    for(size_t i = 0; i < userList.size; i++){
         if(userList.clients[i].FD == leftUserFD){
             userList.clients[i] = userList.clients[userList.size - 1];
             free(userList.clients[--userList.size].name);
@@ -71,7 +96,7 @@ void removeClientFromUserList(int leftUserFD){
     }
 }
 
-void addClientToClientList(struct clientList *list, struct client newClient){
+void addClientInClientList(struct clientList *list, struct client newClient){
     if(list->size == list->capacity){
         if(list->capacity == 0) list->capacity = 1;
         list->capacity = list->capacity * 2;
@@ -125,7 +150,7 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
         user.name = packetReadString(&reader);
         uint8_t *fd = packetReadBytes(&reader, sizeof(int));
         memcpy(&user.FD, fd, sizeof(user.FD));
-        addClientToClientList(&userList, user);
+        addClientInClientList(&userList, user);
         free(user.name);
         free(fd);
     }
@@ -137,8 +162,9 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
 void printUserList(char *myName){
     printf("List of connected users:\n------------------------\n");
     int index = 1;
-    for(int i = 0; i < userList.size; i++){
+    for(size_t i = 0; i < userList.size; i++){
         if(strcmp(myName, userList.clients[i].name) == 0) continue;
+        printf("%s comparing with %s\n", myName, userList.clients[i].name);
         printf("%d: %s\n", index, userList.clients[i].name);
         index++;
     }

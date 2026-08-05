@@ -7,34 +7,39 @@ CFLAGS := \
 	-Wextra \
 	-pthread \
 	-I./src \
-	-I./src/shared \
 	-I./src/client \
 	-I./src/client/commands \
 	-I./src/client/network \
 	-I./src/client/protocol \
-	-I./src/client/serializer \
+	-I./src/client/shared_list \
 	-I./src/server \
+	-I./src/server/client_manager \
 	-I./src/server/network \
 	-I./src/server/protocol \
-	-I./src/server/client_manager
+	-I./src/server/shared_list \
+	-I./src/shared
 
 CLIENT_SOURCES := \
-	src/shared/recv_all.c \
-	src/shared/group.c \
-	src/client/client.c \
+	src/client/commands/command_manager/commandManager.c \
+	src/client/commands/internal_commands/internalCommands.c \
+	src/client/commands/main_commands/mainCommands.c \
 	src/client/network/network.c \
 	src/client/protocol/protocol.c \
-	src/client/serializer/serializer.c \
-	src/client/commands/mainCommands.c \
-	src/client/commands/commands.c
+	src/client/shared_list/shared_list.c \
+	src/client/client.c \
+	src/shared/group/group.c \
+	src/shared/recv_all/recv_all.c \
+	src/shared/serializer/serializer.c 
 
 SERVER_SOURCES := \
-	src/shared/recv_all.c \
-	src/server/server.c \
+	src/server/client_manager/client_manager.c \
 	src/server/network/serverNetwork.c \
 	src/server/protocol/protocol.c \
-	src/client/serializer/serializer.c \
-	src/server/client_manager/client_manager.c
+	src/server/shared_list/shared_list.c \
+	src/server/server.c \
+	src/shared/group/group.c \
+	src/shared/recv_all/recv_all.c \
+	src/shared/serializer/serializer.c \
 
 .PHONY: all clean client server
 

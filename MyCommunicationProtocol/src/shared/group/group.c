@@ -9,6 +9,7 @@ struct group createGroup(int adminFD, char *adminName){
     char *groupDescription = NULL;
     size_t lineptr = 0;
 
+    printf("Enter group's name: ");
     size_t readByte = getline(&groupName, &lineptr, stdin);
 
     if(readByte){
@@ -17,6 +18,7 @@ struct group createGroup(int adminFD, char *adminName){
     }
     else readByte = 0;
 
+    printf("Enter group's description: ");
     readByte = getline(&groupDescription, &lineptr, stdin);
     
     if(readByte){
@@ -63,14 +65,14 @@ void addGroupInGroupList(struct groupList groupList, struct group newGroup){
 }
 
 void removeGroupFromGroupList(struct groupList *groupList, char *groupName){
-    for(int i = 0; i < groupList->size; i++){
+    for(size_t i = 0; i < groupList->size; i++){
         if(strcmp(groupName, groupList->group[i].name) == 0){
             groupList->group[i] = groupList->group[groupList->size - 1];
             free(groupList->group[groupList->size - 1].name);
             free(groupList->group[groupList->size - 1].description);
             free(groupList->group[groupList->size - 1].admin.name);
 
-            for(int j = 0; j < groupList->group[groupList->size - 1].members.size; j++){
+            for(size_t j = 0; j < groupList->group[groupList->size - 1].members.size; j++){
                 free(groupList->group[groupList->size - 1].members.clients[j].name);
             }
 
@@ -82,11 +84,11 @@ void removeGroupFromGroupList(struct groupList *groupList, char *groupName){
 void printGroupList(struct groupList groupList){
     printf("-- List of groups --\n--------------------\n");
     int index = 1;
-    for(int i = 0; i < groupList.size; i++){
+    for(size_t i = 0; i < groupList.size; i++){
         printf("%d: %s\nDescription: %s\n", index++, groupList.group[i].name, groupList.group[i].description);
     }
     if(index == 1){
-        pritnf("No groups formed yet!\n");
+        printf("No groups formed yet!\n");
     }
     printf("--------------------\n");
 }

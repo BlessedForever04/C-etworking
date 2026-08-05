@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../../shared/serializer.h"
-#include "../../shared/recv_all.h"
-
-struct clientList clientList = {NULL, 0, 0};
+#include "../../shared/serializer/serializer.h"
+#include "../../shared/recv_all/recv_all.h"
 
 void removeClientFromClientList(int clientFD){
-    for(int i = 0; i < clientList.size; i++){
+    for(size_t i = 0; i < clientList.size; i++){
         if(clientList.clients[i].FD == clientFD){
             clientList.clients[i] = clientList.clients[clientList.size - 1];
             free(clientList.clients[--clientList.size].name);
@@ -36,7 +34,7 @@ struct client getClientName(struct packetHeader header, int clientFD){
     return newClient;
 }
 
-void addClientToClientList(struct clientList *list, struct client newClient){
+void addClientInClientList(struct clientList *list, struct client newClient){
     if(list->size == list->capacity){
         if(list->capacity == 0) list->capacity = 1;
         list->capacity = list->capacity * 2;
@@ -65,7 +63,7 @@ void sendClientListToClient(int clientFD){
     //            (clientNameLen    +    socketFD) * number of connected clients
     payloadSize = (sizeof(uint32_t) + sizeof(int)) * clientList.size; 
     
-    for(int i = 0; i < clientList.size; i++){
+    for(size_t i = 0; i < clientList.size; i++){
         payloadSize += strlen(clientList.clients[i].name);
     }
     
@@ -78,7 +76,7 @@ void sendClientListToClient(int clientFD){
     struct packetWriter writer;
     packetWriterInIt(&writer, payloadSize);
     
-    for(int i = 0; i < clientList.size; i++){
+    for(size_t i = 0; i < clientList.size; i++){
         packetWriteString(&writer, clientList.clients[i].name);
         packetWriteBytes(&writer, &clientList.clients[i].FD, 4);
     }
@@ -103,10 +101,13 @@ void introduceNewClient(struct client newClient){
     packetWriteBytes(&writer, &newClient.FD, sizeof(int));     // Storing socket FD
     packetWriteString(&writer, newClient.name);                      // Storing name
 
-    for(int i = 0; i < clientList.size; i++){
+    for(size_t i = 0; i < clientList.size; i++){
         // sending header
         send(clientList.clients[i].FD, &header, sizeof(header), 0);
         // Sending buffer
         send(clientList.clients[i].FD, writer.buffer, header.payloadSize, 0);
     }
+
+    free(writer.buffer);
+    free(newClient.name);
 }

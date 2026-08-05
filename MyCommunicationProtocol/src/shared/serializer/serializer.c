@@ -2,11 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "model.h"
-#include "shared/recv_all.h"
+#include "../model.h"
+#include "../recv_all/recv_all.h"
 #include "serializer.h"
-
-char *currentCommunication = NULL;
 
 void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
     writer->size = 0;

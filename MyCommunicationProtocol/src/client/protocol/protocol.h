@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../model.h"
+#include "../../shared/model.h"
 
 extern struct clientList userList;
 
@@ -11,5 +11,7 @@ void printUserList(char *myName);
 void receiveRoomList(struct packetHeader header, int socketFD);
 void handleLeftUser(struct packetHeader header, int socketFD);
 void removeClientFromUserList(int clientFD);
-void addClientToClientList(struct clientList *list, struct client newClient);
-void addJoinedUserToUserList(struct packetHeader header, int serverSocketFD);
+void addClientInClientList(struct clientList *list, struct client newClient);
+void addJoinedUserInUserList(struct packetHeader header, int serverSocketFD);
+void manageNewGroup(struct packetHeader header, int serverSocketFD);
+void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD);
