@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include "protocol.h"
-#include "../serializer/serializer.h"
+#include "../../shared/serializer.h"
 #include "../../shared/recv_all.h"
 
 struct clientList userList = {NULL, 0, 0};
@@ -39,7 +39,7 @@ void addJoinedUserToUserList(struct packetHeader header, int serverSocketFD){
     packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
     struct client newUser;
     uint8_t *fd = packetReadBytes(&reader, sizeof(int));
-    memcpy(&newUser.clientFD, fd, sizeof(newUser.clientFD));
+    memcpy(&newUser.FD, fd, sizeof(newUser.FD));
     newUser.name = packetReadString(&reader);
 
     addClientToClientList(&userList, newUser);
@@ -63,9 +63,8 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
 
 void removeClientFromUserList(int leftUserFD){
     for(int i = 0; i < userList.size; i++){
-        if(userList.clients[i].clientFD == leftUserFD){
-            strcpy(userList.clients[i].name, userList.clients[userList.size - 1].name);
-            userList.clients[i].clientFD = userList.clients[userList.size - 1].clientFD;
+        if(userList.clients[i].FD == leftUserFD){
+            userList.clients[i] = userList.clients[userList.size - 1];
             free(userList.clients[--userList.size].name);
             break;
         }
@@ -90,7 +89,7 @@ void addClientToClientList(struct clientList *list, struct client newClient){
         list->clients = temp;
     }
 
-    list->clients[list->size].clientFD = newClient.clientFD;
+    list->clients[list->size].FD = newClient.FD;
     list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
     if(list->clients[list->size].name == NULL){
         perror("malloc");
@@ -125,7 +124,7 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
     while(reader.size > 0){
         user.name = packetReadString(&reader);
         uint8_t *fd = packetReadBytes(&reader, sizeof(int));
-        memcpy(&user.clientFD, fd, sizeof(user.clientFD));
+        memcpy(&user.FD, fd, sizeof(user.FD));
         addClientToClientList(&userList, user);
         free(user.name);
         free(fd);

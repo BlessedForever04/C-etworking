@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "../../model.h"
-#include "../../shared/recv_all.h"
+#include "model.h"
+#include "shared/recv_all.h"
 #include "serializer.h"
 
 char *currentCommunication = NULL;

@@ -81,6 +81,14 @@ struct messagePacket{
     char *message;
 };
 
+
+struct acceptedConnection{
+    int FD;
+    struct sockaddr_in socketAddress;
+    bool acceptedSuccessfuly;
+    int error;
+};
+
 struct clientList{    
     struct client *clients;
     int size;
@@ -89,14 +97,19 @@ struct clientList{
 
 struct client{
     char *name;
-    int clientFD;
+    int FD;
+};
+struct groupList{
+    struct group *group;
+    size_t size;
+    size_t capacity;
 };
 
-struct acceptedConnection{
-    int FD;
-    struct sockaddr_in socketAddress;
-    bool acceptedSuccessfuly;
-    int error;
+struct group{
+    char *name;
+    char *description;
+    struct client admin;
+    struct clientList members;
 };
 
 #endif

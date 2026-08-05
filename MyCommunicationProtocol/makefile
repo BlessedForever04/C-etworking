@@ -20,10 +20,12 @@ CFLAGS := \
 
 CLIENT_SOURCES := \
 	src/shared/recv_all.c \
+	src/shared/group.c \
 	src/client/client.c \
 	src/client/network/network.c \
 	src/client/protocol/protocol.c \
 	src/client/serializer/serializer.c \
+	src/client/commands/mainCommands.c \
 	src/client/commands/commands.c
 
 SERVER_SOURCES := \

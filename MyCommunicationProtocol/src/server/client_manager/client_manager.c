@@ -2,16 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../../client/serializer/serializer.h"
+#include "../../shared/serializer.h"
 #include "../../shared/recv_all.h"
 
 struct clientList clientList = {NULL, 0, 0};
 
 void removeClientFromClientList(int clientFD){
     for(int i = 0; i < clientList.size; i++){
-        if(clientList.clients[i].clientFD == clientFD){
-            clientList.clients[i].clientFD = clientList.clients[clientList.size - 1].clientFD;
-            strcpy(clientList.clients[i].name, clientList.clients[clientList.size - 1].name);
+        if(clientList.clients[i].FD == clientFD){
+            clientList.clients[i] = clientList.clients[clientList.size - 1];
             free(clientList.clients[--clientList.size].name);
             break;
         }
@@ -33,7 +32,7 @@ struct client getClientName(struct packetHeader header, int clientFD){
         return newClient;
     }
     newClient.name[header.payloadSize] = '\0';
-    newClient.clientFD = clientFD;
+    newClient.FD = clientFD;
     return newClient;
 }
 
@@ -51,7 +50,7 @@ void addClientToClientList(struct clientList *list, struct client newClient){
         }
     }
 
-    list->clients[list->size].clientFD = newClient.clientFD;
+    list->clients[list->size].FD = newClient.FD;
     list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
     if(list->clients[list->size].name == NULL){
         perror("malloc");
@@ -81,7 +80,7 @@ void sendClientListToClient(int clientFD){
     
     for(int i = 0; i < clientList.size; i++){
         packetWriteString(&writer, clientList.clients[i].name);
-        packetWriteBytes(&writer, &clientList.clients[i].clientFD, 4);
+        packetWriteBytes(&writer, &clientList.clients[i].FD, 4);
     }
 
     send(clientFD, writer.buffer, writer.size, 0);
@@ -101,13 +100,13 @@ void introduceNewClient(struct client newClient){
 
     struct packetWriter writer;
     packetWriterInIt(&writer, header.payloadSize);                   // Creating buffer
-    packetWriteBytes(&writer, &newClient.clientFD, sizeof(int));     // Storing socket FD
+    packetWriteBytes(&writer, &newClient.FD, sizeof(int));     // Storing socket FD
     packetWriteString(&writer, newClient.name);                      // Storing name
 
     for(int i = 0; i < clientList.size; i++){
         // sending header
-        send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
+        send(clientList.clients[i].FD, &header, sizeof(header), 0);
         // Sending buffer
-        send(clientList.clients[i].clientFD, writer.buffer, header.payloadSize, 0);
+        send(clientList.clients[i].FD, writer.buffer, header.payloadSize, 0);
     }
 }

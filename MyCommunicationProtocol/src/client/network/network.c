@@ -41,7 +41,7 @@ void *receiveDataFromServer(void *arg){ // here the function has to be of *funct
 
 int getMySocketFD(char *myName){
     for(int i = 0; i < userList.size; i++){
-        if(strcmp(userList.clients[i].name, myName) == 0) return userList.clients[i].clientFD;
+        if(strcmp(userList.clients[i].name, myName) == 0) return userList.clients[i].FD;
     }
     return 69;
 }

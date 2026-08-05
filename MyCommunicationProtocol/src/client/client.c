@@ -5,8 +5,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#include "commands/commands.h"
-#include "serializer/serializer.h"
+#include "commands/commandManager.h"
+#include "../shared/serializer.h"
 #include "protocol/protocol.h"
 #include "network/network.h"
 #include "../model.h"
@@ -74,7 +74,7 @@ int main(){
         charCount = getline(&message.message, &lineSize, stdin);
         
         struct packetHeader header = {0};
-        if(strcmp(message.message, "/exit\n") == 0){
+        if(strcmp(message.message, "/quit\n") == 0 || strcmp(message.message, "q\n") == 0){
             header.payloadSize = 0;
             header.type = PACKET_USER_LEFT;
             send(socketFD, &header, sizeof(header), 0); // Header

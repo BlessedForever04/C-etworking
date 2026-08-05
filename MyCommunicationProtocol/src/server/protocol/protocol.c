@@ -5,7 +5,9 @@
 #include "../../model.h"
 #include "../client_manager/client_manager.h"
 #include "../../shared/recv_all.h"
-#include "../../client/serializer/serializer.h"
+#include "../../shared/serializer.h"
+
+struct groupList localRoomList = {NULL, 0, 0};
 
 void manageServerProtocol(struct packetHeader header, int sourceClientFD){
     switch (header.type){
@@ -60,8 +62,8 @@ void manageLeftClient(int sourceClientFD){
     header.payloadSize = sizeof(int);
 
     for(int i = 0; i < clientList.size; i++){
-        send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
-        send(clientList.clients[i].clientFD, &sourceClientFD, sizeof(int), 0);
+        send(clientList.clients[i].FD, &header, sizeof(header), 0);
+        send(clientList.clients[i].FD, &sourceClientFD, sizeof(int), 0);
     }
 }
 
@@ -77,9 +79,9 @@ void manageBroadcast(int sourceClientFD, struct packetHeader header){
     
     if(byteReceived == (ssize_t)header.payloadSize){
         for(int i = 0; i < clientList.size; i++){
-            if(clientList.clients[i].clientFD != sourceClientFD){
-                send(clientList.clients[i].clientFD, &header, sizeof(header), 0);
-                send(clientList.clients[i].clientFD, message, header.payloadSize, 0);
+            if(clientList.clients[i].FD != sourceClientFD){
+                send(clientList.clients[i].FD, &header, sizeof(header), 0);
+                send(clientList.clients[i].FD, message, header.payloadSize, 0);
             }
         }
     }
