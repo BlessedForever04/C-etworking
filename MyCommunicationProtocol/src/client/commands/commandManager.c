@@ -35,7 +35,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
         if(strcmp(argv[0], "/refresh") == 0){
             printf("\n");
             printUserList(myName);
-            printGruopList(localGroupList);`
+            printGruopList(localGroupList);
             return;
         }
     }
