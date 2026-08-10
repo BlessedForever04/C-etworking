@@ -1,3 +1,3 @@
 #pragma once
 
-void manageCommands(char *command, int serverSocketFD, char *myName, int mySocketFD);
+void manageCommands (char *command, int serverSocketFD, char *myName, int mySocketFD);

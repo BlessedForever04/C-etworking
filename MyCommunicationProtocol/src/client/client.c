@@ -6,8 +6,6 @@
 #include <stdlib.h>
 
 #include "commands/command_manager/commandManager.h"
-#include "../shared/serializer/serializer.h"
-#include "protocol/protocol.h"
 #include "network/network.h"
 #include "../shared/model.h"
 
@@ -71,8 +69,7 @@ int main(){
     // Main loop
     while(1){
         // Client writing message in main external loop
-        charCount = getline(&message.message, &lineSize, stdin);
-        
+        charCount = getline(&message.message, &lineSize, stdin); 
         struct packetHeader header = {0};
         if(strcmp(message.message, "/quit\n") == 0 || strcmp(message.message, "/q\n") == 0){
             header.payloadSize = 0;
