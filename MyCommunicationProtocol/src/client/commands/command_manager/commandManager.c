@@ -5,7 +5,6 @@
 #include "commandManager.h"
 #include "../../../shared/group/group.h"
 #include "../../protocol/protocol.h"
-#include "../../../shared/serializer/serializer.h"
 #include "../../shared_list/shared_list.h"
 
 void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int mySocketFD){

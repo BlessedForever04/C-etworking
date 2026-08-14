@@ -66,6 +66,7 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
         return;
     }
     introduceNewClient(newClient);
+    printf("User's name is : %s", newClient.name);
     addClientInClientList(&clientList, newClient);
     sendClientListToClient(sourceClientFD);
     sendRoomListToClient(sourceClientFD);
