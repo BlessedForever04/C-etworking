@@ -36,6 +36,13 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             printGroupList(groupList);
             return;
         }
+        
+        if(strcmp(argv[0], "/create_group") == 0){
+            // creation of group
+            struct group newGroup = createGroup(mySocketFD, myName);
+            addGroupInGroupList(&groupList, newGroup);
+            shareNewGroupDetailsToServer(newGroup, serverSocketFD);
+        }
     }
 
     if(argc == 2){
@@ -50,13 +57,6 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             if(isNotFound){
                 printf("User not found\n"); 
             }
-        }
-
-        if(strcmp(argv[1], "create_group") == 0){
-            // creation of group
-            struct group newGroup = createGroup(mySocketFD, myName);
-            addGroupInGroupList(&groupList, newGroup);
-            shareNewGroupDetailsToServer(newGroup, serverSocketFD);
         }
 
         if(strcmp(argv[1], "delete_group") == 0){
