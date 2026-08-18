@@ -55,7 +55,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
         if(strcmp(argv[1], "create_group") == 0){
             // creation of group
             struct group newGroup = createGroup(mySocketFD, myName);
-            addGroupInGroupList(groupList, newGroup);
+            addGroupInGroupList(&groupList, newGroup);
             shareNewGroupDetailsToServer(newGroup, serverSocketFD);
         }
 

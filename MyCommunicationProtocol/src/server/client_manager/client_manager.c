@@ -93,8 +93,8 @@ void sendRoomListToClient(int clientFD){
 void introduceNewClient(struct client newClient){
     struct packetHeader header;
     header.type = PACKET_USER_JOINED_SERVER;
-    //                   SocketFD    + len         + name.len
-    header.payloadSize = sizeof(int) + sizeof(int) + strlen(newClient.name);
+    // SocketFD + string length prefix + name string
+    header.payloadSize = sizeof(int) + sizeof(uint32_t) + strlen(newClient.name);
 
     struct packetWriter writer;
     packetWriterInIt(&writer, header.payloadSize);                   // Creating buffer
@@ -109,5 +109,4 @@ void introduceNewClient(struct client newClient){
     }
 
     free(writer.buffer);
-    free(newClient.name);
 }

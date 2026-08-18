@@ -44,7 +44,7 @@ void manageNewGroup(struct packetHeader header, int sourceClientFD){
     newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int)); // Group admin's FD
 
     // Adding group in local list
-    addGroupInGroupList(roomList, newGroup);
+    addGroupInGroupList(&roomList, newGroup);
     // Broadcasting newGroup
     for(size_t i = 0; i < clientList.size; i++){
         if(clientList.clients[i].FD != sourceClientFD){

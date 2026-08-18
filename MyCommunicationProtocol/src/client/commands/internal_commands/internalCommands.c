@@ -10,8 +10,11 @@ void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD){
     struct packetHeader header;
     header.type = PACKET_CREATE_ROOM;
 
-    // Format:            sizeof(strlen) + group_name            + sizeof(strlen) + group_description            + sizeof(strlen) + admin_name                  + admin_fd
-    header.payloadSize = (sizeof(int)    + strlen(newGroup.name) + sizeof(int)    + strlen(newGroup.description) + sizeof(int)    + strlen(newGroup.admin.name) + sizeof(newGroup.admin.FD));
+    // Each string is serialized as uint32 length + payload.
+    header.payloadSize = (sizeof(uint32_t) + strlen(newGroup.name)) +
+                         (sizeof(uint32_t) + strlen(newGroup.description)) +
+                         (sizeof(uint32_t) + strlen(newGroup.admin.name)) +
+                         sizeof(newGroup.admin.FD);
 
     // Buffer writing
     struct packetWriter writer;
