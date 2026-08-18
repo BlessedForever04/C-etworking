@@ -4,9 +4,9 @@
 
 extern struct clientList userList;
 
-void manageClientProtocol(struct packetHeader header, int socketFD, char *myName);
+void manageClientProtocol(struct packetHeader header, int socketFD);
 void receiveAndPrintMessage(struct packetHeader header, int socketFD);
-void receiveUserList(struct packetHeader header, int socketFD, char *myName);
+void receiveUserList(struct packetHeader header, int socketFD);
 void printUserList(char *myName);
 void receiveRoomList(struct packetHeader header, int socketFD);
 void handleLeftUser(struct packetHeader header, int socketFD);

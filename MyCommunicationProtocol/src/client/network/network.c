@@ -26,14 +26,13 @@ void *receiveDataFromServer(void *arg){ // here the function has to be of *funct
         struct pair *socketAndName = (struct pair*)arg;
 
         int serverSocketFD = socketAndName->socketFD;
-        char *myName = socketAndName->name;
 
         struct packetHeader header = {0};
 
         while(1){
                 int byteReceived = recv(serverSocketFD, &header, sizeof(header), 0);
                 if(byteReceived > 0){
-                        manageClientProtocol(header, serverSocketFD, myName);
+                        manageClientProtocol(header, serverSocketFD);
                 }
         }
         return NULL;

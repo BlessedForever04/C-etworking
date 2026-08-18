@@ -8,10 +8,10 @@
 #include "../../shared/group/group.h"
 #include "../shared_list/shared_list.h"
 
-void manageClientProtocol(struct packetHeader header, int serverSocketFD, char *myName){
+void manageClientProtocol(struct packetHeader header, int serverSocketFD){
     switch (header.type){
         case PACKET_CLIENT_LIST:
-        receiveUserList(header, serverSocketFD, myName);
+        receiveUserList(header, serverSocketFD);
         break;
         
         case PACKET_ROOM_LIST:
@@ -140,7 +140,7 @@ void receiveAndPrintMessage(struct packetHeader header, int socketFD){
     if(currentCommunication != NULL && strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
 }
 
-void receiveUserList(struct packetHeader header, int socketFD, char *myName){
+void receiveUserList(struct packetHeader header, int socketFD){
     // Receiving the users (clientList)
     struct packetReader reader; 
     packetReaderInIt(&reader, header.payloadSize, socketFD);
@@ -156,7 +156,6 @@ void receiveUserList(struct packetHeader header, int socketFD, char *myName){
     }
     
     free(reader.buffer); 
-    printUserList(myName);
 }
 
 void printUserList(char *myName){
