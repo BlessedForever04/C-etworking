@@ -33,8 +33,6 @@ typedef enum {
     
     // Administration
     PACKET_KICK, // Username
-    PACKET_MUTE, // Only header
-    PACKET_UNMUTE, // Only header
 
     // File
     PACKET_FILE, // Header + (uint32_t filenameSize + char *filename + uint32_t dataSize + uint8_t *data)

@@ -42,6 +42,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             struct group newGroup = createGroup(mySocketFD, myName);
             addGroupInGroupList(&groupList, newGroup);
             shareNewGroupDetailsToServer(newGroup, serverSocketFD);
+            return;
         }
     }
 
@@ -57,12 +58,13 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             if(isNotFound){
                 printf("User not found\n"); 
             }
+            return;
         }
 
         if(strcmp(argv[1], "delete_group") == 0){
             // implement deletion of group
+            return;
         }
-
     }
     printf("Invalid command, try /help\n");
 }

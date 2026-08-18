@@ -45,13 +45,6 @@ void manageNewGroup(struct packetHeader header, int sourceClientFD){
 
     // Adding group in local list
     addGroupInGroupList(&roomList, newGroup);
-    // Broadcasting newGroup
-    for(size_t i = 0; i < clientList.size; i++){
-        if(clientList.clients[i].FD != sourceClientFD){
-            send(clientList.clients[i].FD, &header, sizeof(header), 0);
-            send(clientList.clients[i].FD, reader.buffer, header.payloadSize, 0);
-        }
-    }
 
     // freeing memory
     free(reader.buffer);
