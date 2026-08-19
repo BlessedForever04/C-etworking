@@ -7,4 +7,5 @@ void manageBroadcast(int socketFD, struct packetHeader header);
 void manageLeftClient(int socketFD);
 void managePeerChat(struct packetHeader header, int sourceClientFD);
 void manageNewClient(struct packetHeader header, int serverSocketFD);
-void manageNewGroup(struct packetHeader header, int sourceClientFD);
+void manageNewRoom(struct packetHeader header, int sourceClientFD);
+void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD);

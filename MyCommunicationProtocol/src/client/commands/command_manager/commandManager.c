@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -25,6 +26,39 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
     }
 
     if(argc == 1){
+        if(strcmp(argv[0], "/add_member") == 0){
+            char memberExists = 'n';
+            char *memberName = NULL;
+            char *groupName = NULL;
+
+            // Input from user
+            getUserAndGroupName(memberName, groupName);
+
+            struct client newMember;
+            for(size_t i = 0; i < userList.size; i++){
+                if(strcmp(memberName, userList.clients[i].name) == 0){
+                    memberExists = 'y';
+                    newMember = userList.clients[i];
+                    break;
+                }
+            }
+
+            if(memberExists == 'n'){
+                printf("Error: User doesn't exists, please enter valid user name!\n");
+            }
+            else{
+                struct group *group;
+                for(size_t i = 0; i < groupList.size; i++){
+                    if(strcmp(groupList.group[i].name, groupName) == 0){
+                        group = &groupList.group[i];
+                    }
+                }
+                addUserInUserList(&group->members, newMember);
+                shareAddedMemberDetailsToServer(group->name, newMember, serverSocketFD);
+            }
+            return;
+        }
+
         if(strcmp(argv[0], "/help") == 0){
             // print usage
             return;
@@ -36,7 +70,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             printGroupList(groupList);
             return;
         }
-        
+
         if(strcmp(argv[0], "/create_group") == 0){
             // creation of group
             struct group newGroup = createGroup(mySocketFD, myName);
@@ -66,5 +100,6 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             return;
         }
     }
+
     printf("Invalid command, try /help\n");
 }

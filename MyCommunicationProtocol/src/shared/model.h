@@ -79,7 +79,6 @@ struct messagePacket{
     char *message;
 };
 
-
 struct acceptedConnection{
     int FD;
     struct sockaddr_in socketAddress;

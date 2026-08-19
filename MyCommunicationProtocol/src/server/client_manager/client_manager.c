@@ -85,11 +85,6 @@ void sendClientListToClient(int clientFD){
     free(writer.buffer);
 }
 
-void sendRoomListToClient(int clientFD){
-    (void)clientFD;
-    // Send room list to connected clients.
-}
-
 void introduceNewClient(struct client newClient){
     struct packetHeader header;
     header.type = PACKET_USER_JOINED_SERVER;

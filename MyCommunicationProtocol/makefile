@@ -17,7 +17,10 @@ CFLAGS := \
 	-I./src/server/network \
 	-I./src/server/protocol \
 	-I./src/server/shared_list \
-	-I./src/shared
+	-I./src/shared \
+	-I./src/shared/group \
+	-I./src/shared/recv_all \
+	-I./src/shared/serializer
 
 CLIENT_SOURCES := \
 	src/client/commands/command_manager/commandManager.c \
@@ -39,7 +42,7 @@ SERVER_SOURCES := \
 	src/server/server.c \
 	src/shared/group/group.c \
 	src/shared/recv_all/recv_all.c \
-	src/shared/serializer/serializer.c \
+	src/shared/serializer/serializer.c
 
 .PHONY: all clean client server
 

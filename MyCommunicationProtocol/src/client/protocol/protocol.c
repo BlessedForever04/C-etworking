@@ -1,4 +1,5 @@
 #include "../../shared/model.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -34,10 +35,36 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
         manageNewGroup(header, serverSocketFD);
         break;
 
+        case PACKET_JOIN_ROOM:
+        manageNewMemberInGroup(header, serverSocketFD); 
+        break;
+
         default:
         // Default case handling
         break;
     }
+}
+
+void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+
+    struct client newMember;
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    newMember.FD = *FD;
+    newMember.name = packetReadString(&reader); 
+    char *groupName = packetReadString(&reader);
+
+    for(size_t i = 0; i < groupList.size; i++){
+        if(strcmp(groupName, groupList.group[i].name) == 0){
+            addUserInUserList(&groupList.group[i].members, newMember);
+            break;
+        }
+    }
+
+    free(newMember.name);
+    free(groupName);
+    free(FD);
 }
 
 void manageNewGroup(struct packetHeader header, int serverSocketFD){
@@ -67,7 +94,7 @@ void addJoinedUserInUserList(struct packetHeader header, int serverSocketFD){
     memcpy(&newUser.FD, fd, sizeof(newUser.FD));
     newUser.name = packetReadString(&reader);
 
-    addClientInClientList(&userList, newUser);
+    addUserInUserList(&userList, newUser);
     free(reader.buffer);
     free(fd);
     free(newUser.name);
@@ -96,15 +123,10 @@ void removeClientFromUserList(int leftUserFD){
     }
 }
 
-void addClientInClientList(struct clientList *list, struct client newClient){
+void addUserInUserList(struct clientList *list, struct client newClient){
     if(list->size == list->capacity){
         if(list->capacity == 0) list->capacity = 1;
         list->capacity = list->capacity * 2;
-
-        /*
-            Here list->clients is not directly used for reallocation bcz of the failure risk, its better practice to check temp first and then allocate if 
-            everything is good 
-        */
 
         struct client *temp = realloc(list->clients, sizeof(struct client) * list->capacity);
         if(temp == NULL){
@@ -150,7 +172,7 @@ void receiveUserList(struct packetHeader header, int socketFD){
         user.name = packetReadString(&reader);
         uint8_t *fd = packetReadBytes(&reader, sizeof(int));
         memcpy(&user.FD, fd, sizeof(user.FD));
-        addClientInClientList(&userList, user);
+        addUserInUserList(&userList, user);
         free(user.name);
         free(fd);
     }

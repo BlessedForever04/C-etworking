@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -25,15 +26,47 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         break;
 
     case PACKET_CREATE_ROOM:
-        manageNewGroup(header, sourceClientFD); 
+        manageNewRoom(header, sourceClientFD); 
         break;
-        
+
+    case PACKET_JOIN_ROOM:
+        manageNewMemberInRoom(header, sourceClientFD);
+        break; 
+
     default:
         break;
     }
 }
 
-void manageNewGroup(struct packetHeader header, int sourceClientFD){
+void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+
+    char *memberName = packetReadString(&reader);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    char *groupName = packetReadString(&reader);
+
+    struct group *group;
+
+    for(size_t i = 0; i < roomList.size; i++){
+        if(strcmp(groupName, roomList.group[i].name) == 0){
+            group = &roomList.group[i];
+            break;
+        }
+    }
+
+    // Sending the new member info to all the group members
+    for(size_t i = 0; i < group->members.size; i++){
+        send(group->members.clients[i].FD, &header, sizeof(header), 0);
+        send(group->members.clients[i].FD, reader.buffer, header.payloadSize, 0);
+    }
+
+    free(groupName);
+    free(FD);
+    free(memberName);
+}
+
+void manageNewRoom(struct packetHeader header, int sourceClientFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
 
@@ -62,7 +95,6 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
     printf("User's name is : %s", newClient.name);
     addClientInClientList(&clientList, newClient);
     sendClientListToClient(sourceClientFD);
-    sendRoomListToClient(sourceClientFD);
     free(newClient.name);
 }
 
