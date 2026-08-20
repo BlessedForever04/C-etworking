@@ -8,7 +8,7 @@ void manageClientProtocol(struct packetHeader header, int socketFD);
 void receiveAndPrintMessage(struct packetHeader header, int socketFD);
 void receiveUserList(struct packetHeader header, int socketFD);
 void printUserList(char *myName);
-void receiveRoomList(struct packetHeader header, int socketFD);
+void receiveGroupList(struct packetHeader header, int socketFD);
 void handleLeftUser(struct packetHeader header, int socketFD);
 void removeClientFromUserList(int clientFD);
 void addUserInUserList(struct clientList *list, struct client newClient);

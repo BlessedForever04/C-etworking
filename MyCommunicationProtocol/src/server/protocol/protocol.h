@@ -9,3 +9,4 @@ void managePeerChat(struct packetHeader header, int sourceClientFD);
 void manageNewClient(struct packetHeader header, int serverSocketFD);
 void manageNewRoom(struct packetHeader header, int sourceClientFD);
 void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD);
+void sendGroupDetailsToAddedMember(struct group group, int newMemberFD);

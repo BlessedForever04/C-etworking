@@ -78,7 +78,7 @@ void sendClientListToClient(int clientFD){
     
     for(size_t i = 0; i < clientList.size; i++){
         packetWriteString(&writer, clientList.clients[i].name);
-        packetWriteBytes(&writer, &clientList.clients[i].FD, 4);
+        packetWriteBytes(&writer, &clientList.clients[i].FD, sizeof(int));
     }
 
     send(clientFD, writer.buffer, writer.size, 0);

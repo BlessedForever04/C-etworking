@@ -10,6 +10,13 @@
 
 size_t lineSize = 0;
 
+static void removeNewline(char *input){
+    size_t length = strlen(input);
+    if(length > 0 && input[strlen(input) - 1] == '\n'){
+        input[length - 1] = '\0';
+    }
+}
+
 void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverSocketFD){
     free(currentCommunication);
     currentCommunication = malloc(strlen(user->name) + 1);
@@ -103,22 +110,25 @@ void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD){
     free(writer.buffer);
 }
 
-void getUserAndGroupName(char *userName, char *groupName){
+void getUserAndGroupName(char **userName, char **groupName){
     printf("Enter user name: ");
-    int charCount = getline(&userName, &lineSize, stdin);
+    int charCount = getline(userName, &lineSize, stdin);
     if(charCount <= 0){
         perror("getline");
         exit(EXIT_FAILURE);
     }
+    removeNewline(*userName);
     lineSize = 0;
 
     printf("Enter group name: ");
-    charCount = getline(&groupName, &lineSize, stdin);
+    charCount = getline(groupName, &lineSize, stdin);
     if(charCount <= 0){
         perror("getline");
         exit(EXIT_FAILURE);
     }
+    removeNewline(*groupName);
     lineSize = 0;
+    printf("Excaped here\n");
 }
 
 void shareAddedMemberDetailsToServer(char *groupName, struct client newMember, int serverSocketFD){
@@ -128,7 +138,7 @@ void shareAddedMemberDetailsToServer(char *groupName, struct client newMember, i
     header.type = PACKET_JOIN_ROOM;
     // User + group
     // User name + FD   + group name
-    header.payloadSize = sizeof(uint32_t) + strlen(newMember.name) + sizeof(int) + sizeof(uint32_t) + sizeof(groupName);
+    header.payloadSize = sizeof(uint32_t) + strlen(newMember.name) + sizeof(int) + sizeof(uint32_t) + strlen(groupName);
     packetWriterInIt(&writer, header.payloadSize);
 
     packetWriteString(&writer, newMember.name);

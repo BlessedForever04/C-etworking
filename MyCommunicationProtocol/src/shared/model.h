@@ -15,7 +15,7 @@ typedef enum {
 
     // Client List and Room list
     PACKET_CLIENT_LIST,
-    PACKET_ROOM_LIST,
+    PACKET_GROUP_LIST,
 
     PACKET_INTRO, // Only for sending name's payload size while accepting the client
 

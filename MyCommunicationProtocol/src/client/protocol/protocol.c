@@ -15,8 +15,8 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
         receiveUserList(header, serverSocketFD);
         break;
         
-        case PACKET_ROOM_LIST:
-        receiveRoomList(header, serverSocketFD);
+        case PACKET_GROUP_LIST:
+        receiveGroupList(header, serverSocketFD);
         break;
         
         case PACKET_CHAT:
@@ -50,9 +50,9 @@ void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD){
     packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
 
     struct client newMember;
+    newMember.name = packetReadString(&reader);
     uint8_t *FD = packetReadBytes(&reader, sizeof(int));
-    newMember.FD = *FD;
-    newMember.name = packetReadString(&reader); 
+    memcpy(&newMember.FD, FD, sizeof(newMember.FD));
     char *groupName = packetReadString(&reader);
 
     for(size_t i = 0; i < groupList.size; i++){
@@ -65,6 +65,7 @@ void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD){
     free(newMember.name);
     free(groupName);
     free(FD);
+    free(reader.buffer);
 }
 
 void manageNewGroup(struct packetHeader header, int serverSocketFD){
@@ -185,7 +186,6 @@ void printUserList(char *myName){
     int index = 1;
     for(size_t i = 0; i < userList.size; i++){
         if(strcmp(myName, userList.clients[i].name) == 0) continue;
-        printf("%s comparing with %s\n", myName, userList.clients[i].name);
         printf("%d: %s\n", index, userList.clients[i].name);
         index++;
     }
@@ -193,7 +193,25 @@ void printUserList(char *myName){
     printf("------------------------\n");
 }
 
-void receiveRoomList(struct packetHeader header, int socketFD){
-    (void)socketFD;
-    (void)header;
+void receiveGroupList(struct packetHeader header, int socketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, socketFD);
+
+    struct group newGroup;
+    newGroup.name = packetReadString(&reader);
+    newGroup.description = packetReadString(&reader);
+    newGroup.admin.name = packetReadString(&reader);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    memcpy(&newGroup.admin.FD, FD, sizeof(int));
+    
+    struct client groupMember;
+    while(reader.size > 0){
+        groupMember.name = packetReadString(&reader);
+        FD = packetReadBytes(&reader, sizeof(int));
+        memcpy(&groupMember.FD, FD, sizeof(int));
+
+        addUserInUserList(&newGroup.members, groupMember);
+        free(groupMember.name);
+        free(FD);
+    }
 }

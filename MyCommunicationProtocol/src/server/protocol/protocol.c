@@ -46,7 +46,7 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
     uint8_t *FD = packetReadBytes(&reader, sizeof(int));
     char *groupName = packetReadString(&reader);
 
-    struct group *group;
+    struct group *group = NULL;
 
     for(size_t i = 0; i < roomList.size; i++){
         if(strcmp(groupName, roomList.group[i].name) == 0){
@@ -54,6 +54,21 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
             break;
         }
     }
+
+    if(group == NULL){
+        free(groupName);
+        free(FD);
+        free(memberName);
+        free(reader.buffer);
+        return;
+    }
+
+    struct client newMember = {memberName, 0};
+    memcpy(&newMember.FD, FD, sizeof(newMember.FD));
+    addClientInClientList(&group->members, newMember);
+
+    // Sending the group details to the added member so he can update this group in his gruop list
+    sendGroupDetailsToAddedMember(*group, newMember.FD);
 
     // Sending the new member info to all the group members
     for(size_t i = 0; i < group->members.size; i++){
@@ -64,6 +79,43 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
     free(groupName);
     free(FD);
     free(memberName);
+    free(reader.buffer);
+}
+
+void sendGroupDetailsToAddedMember(struct group group, int newMemberFD){
+    struct packetHeader header;
+    header.type = PACKET_GROUP_LIST;
+    header.payloadSize = sizeof(uint32_t) +
+                         strlen(group.name) +
+                         sizeof(uint32_t) +
+                         strlen(group.description) +
+                         sizeof(uint32_t) +
+                         strlen(group.admin.name) +
+                         sizeof(int);
+
+    for(size_t i = 0; i < group.members.size; i++){
+        header.payloadSize += sizeof(uint32_t) + strlen(group.members.clients[i].name) + sizeof(int); 
+    }
+
+    struct packetWriter writer;
+    packetWriterInIt(&writer, header.payloadSize);
+
+    // Group name
+    packetWriteString(&writer, group.name);
+    // Description
+    packetWriteString(&writer, group.description);
+    // Admin's name
+    packetWriteString(&writer, group.admin.name);
+    // Admin's FD
+    packetWriteBytes(&writer, &group.admin.FD, sizeof(int));
+
+    for(size_t i = 0; i < group.members.size; i++){
+        packetWriteString(&writer, group.members.clients[i].name);
+        packetWriteBytes(&writer, &group.members.clients[i].FD, sizeof(int));
+    }
+
+    send(newMemberFD, &header, sizeof(header), 0);
+    send(newMemberFD, writer.buffer, header.payloadSize, 0);
 }
 
 void manageNewRoom(struct packetHeader header, int sourceClientFD){

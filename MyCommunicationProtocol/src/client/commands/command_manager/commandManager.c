@@ -27,35 +27,43 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
 
     if(argc == 1){
         if(strcmp(argv[0], "/add_member") == 0){
-            char memberExists = 'n';
             char *memberName = NULL;
             char *groupName = NULL;
 
             // Input from user
-            getUserAndGroupName(memberName, groupName);
+            getUserAndGroupName(&memberName, &groupName);
+            printf("Returned after getting the member name and grp name\n");
 
-            struct client newMember;
+            struct client *newMember = NULL;
             for(size_t i = 0; i < userList.size; i++){
+                printf("Comparing :%s with %s\n", memberName, userList.clients[i].name);
                 if(strcmp(memberName, userList.clients[i].name) == 0){
-                    memberExists = 'y';
-                    newMember = userList.clients[i];
+                    newMember = &userList.clients[i];
                     break;
                 }
             }
 
-            if(memberExists == 'n'){
-                printf("Error: User doesn't exists, please enter valid user name!\n");
+            if(newMember == NULL){
+                printf("Error: User doesn't exist, please enter valid user name!\n");
             }
             else{
-                struct group *group;
+                struct group *group = NULL;
                 for(size_t i = 0; i < groupList.size; i++){
                     if(strcmp(groupList.group[i].name, groupName) == 0){
                         group = &groupList.group[i];
+                        break;
                     }
                 }
-                addUserInUserList(&group->members, newMember);
-                shareAddedMemberDetailsToServer(group->name, newMember, serverSocketFD);
+                if(group == NULL){
+                    printf("Error: Group doesn't exist, please enter a valid group name!\n");
+                }
+                else{
+                    addUserInUserList(&group->members, *newMember);
+                    shareAddedMemberDetailsToServer(group->name, *newMember, serverSocketFD);
+                }
             }
+            free(memberName);
+            free(groupName);
             return;
         }
 
