@@ -15,3 +15,4 @@ void addJoinedUserInUserList(struct packetHeader header, int serverSocketFD);
 void manageNewGroup(struct packetHeader header, int serverSocketFD);
 void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD);
 void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD);
+void manageGroupChat(struct packetHeader header, int serverSocketFD);

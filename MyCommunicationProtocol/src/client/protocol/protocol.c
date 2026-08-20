@@ -40,10 +40,29 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
         manageNewMemberInGroup(header, serverSocketFD); 
         break;
 
+        case PACKET_GROUP_CHAT:
+        manageGroupChat(header, serverSocketFD);
+
         default:
         // Default case handling
         break;
     }
+}
+
+void manageGroupChat(struct packetHeader header, int socketFD){
+    struct packetReader reader; 
+    packetReaderInIt(&reader, header.payloadSize, socketFD); 
+    // grp name, sender name, sent msg
+    char *groupName = packetReadString(&reader);
+    char *sender = packetReadString(&reader);
+    char *message = packetReadString(&reader);
+
+    if(currentCommunication != NULL && strcmp(currentCommunication, groupName) == 0) printf("%s: %s", sender, message);
+
+    free(groupName);
+    free(sender);
+    free(message);
+    free(reader.buffer);
 }
 
 void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD){
@@ -132,13 +151,15 @@ void receiveAndPrintMessage(struct packetHeader header, int socketFD){
 
     // Just have to receive it
     uint8_t *tempFD = packetReadBytes(&reader, sizeof(int)); // Receiving destinationFD
-    tempFD = packetReadBytes(&reader, sizeof(int)); // Receiving sourceFD
     char *sender = packetReadString(&reader); // Sender's name
     char *message = packetReadString(&reader); // Sender's message
-    
-    free(tempFD);
-    
+        
     if(currentCommunication != NULL && strcmp(currentCommunication, sender) == 0) printf("%s: %s", sender, message);
+
+    free(tempFD);
+    free(sender);
+    free(message);
+    free(reader.buffer);
 }
 
 void receiveUserList(struct packetHeader header, int socketFD){

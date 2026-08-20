@@ -29,16 +29,17 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
     // Communication loop with user
     while(true){
         // Client writing message
+        lineSize = 0;
         int charCount = getline(&message.message, &lineSize, stdin);
         if(charCount <= 0){
             perror("getline");
             exit(EXIT_FAILURE);
         }
         
-        struct packetHeader header = {0};
         if(strcmp(message.message, "/back\n") == 0){
             break;
         }
+        struct packetHeader header = {0};
         
         // Handles internal commands
         if(message.message[0] == '/'){
@@ -46,9 +47,8 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
             continue;
         }
         
-        // destinationFD + sourceFD + nameLen + myName + msglen + msg
+        // destinationFD + myNameLen + myName + msglen + msg
         uint32_t payloadSize = sizeof(int) +
-                               sizeof(int) + 
                                sizeof(uint32_t) + 
                                strlen(myName) + 
                                sizeof(uint32_t) + 
@@ -63,13 +63,69 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
         packetWriterInIt(&writer, payloadSize);
         // DestinationFD
         packetWriteBytes(&writer, &user->FD, sizeof(int));
-        // SourceFD
-        packetWriteBytes(&writer, &mySocketFD, sizeof(int));
         // Source name
         packetWriteString(&writer, myName);
         // Source message
         packetWriteString(&writer, message.message);
         
+        // Sending packet header
+        send(serverSocketFD, &header, sizeof(header), 0);
+        // Sending message packet
+        send(serverSocketFD, writer.buffer, writer.size, 0); 
+        free(writer.buffer);
+    } 
+}
+
+void chatWithinGroup(char *groupName, char *myName, int mySocketFD, int serverSocketFD){
+    free(currentCommunication);
+    currentCommunication = malloc(strlen(groupName) + 1);
+    strcpy(currentCommunication, groupName);
+
+    printf("-- %s --\n--------------\n", groupName);
+    
+    struct messagePacket message;
+
+    // Communication loop with user
+    while(true){
+        // Client writing message
+        lineSize = 0;
+        int charCount = getline(&message.message, &lineSize, stdin);
+        if(charCount <= 0){
+            perror("getline");
+            exit(EXIT_FAILURE);
+        }
+        
+        if(strcmp(message.message, "/back") == 0){
+            break;
+        }
+        struct packetHeader header = {0};
+        
+        // Handles internal commands
+        if(message.message[0] == '/'){
+            manageCommands(message.message, serverSocketFD, myName, mySocketFD);
+            continue;
+        }
+        
+        // groupNameLen + groupName + myNameLen + myName + myMsgLen + myMsg
+        uint32_t payloadSize = sizeof(uint32_t) +
+                               strlen(groupName) +
+                               sizeof(uint32_t) +
+                               strlen(myName) +
+                               sizeof(uint32_t) +
+                               strlen(message.message);
+
+        // Building packet header
+        header.payloadSize = payloadSize;
+        header.type = PACKET_GROUP_CHAT;
+        
+        // Serialization (building payload)
+        struct packetWriter writer;
+
+        packetWriterInIt(&writer, header.payloadSize);
+        packetWriteString(&writer, groupName);
+        packetWriteString(&writer, myName);
+        packetWriteString(&writer, message.message);
+
         // Sending packet header
         send(serverSocketFD, &header, sizeof(header), 0);
         // Sending message packet
@@ -112,6 +168,7 @@ void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD){
 
 void getUserAndGroupName(char **userName, char **groupName){
     printf("Enter user name: ");
+    lineSize = 0;
     int charCount = getline(userName, &lineSize, stdin);
     if(charCount <= 0){
         perror("getline");
@@ -127,7 +184,6 @@ void getUserAndGroupName(char **userName, char **groupName){
         exit(EXIT_FAILURE);
     }
     removeNewline(*groupName);
-    lineSize = 0;
     printf("Excaped here\n");
 }
 

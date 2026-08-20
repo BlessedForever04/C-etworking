@@ -33,9 +33,38 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         manageNewMemberInRoom(header, sourceClientFD);
         break; 
 
+    case PACKET_GROUP_CHAT:
+        manageGroupChat(header, sourceClientFD);
+        break;
+
     default:
         break;
     }
+}
+
+void manageGroupChat(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    // Reading the received packet from source client
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+
+    char *groupName = packetReadString(&reader);
+    char *senderName = packetReadString(&reader);
+
+    for(size_t i = 0; i < roomList.size; i++){
+        if(strcmp(groupName, roomList.group[i].name) == 0){
+            for(size_t j = 0; j < roomList.group[i].members.size; j++){
+                if(strcmp(senderName, roomList.group[i].members.clients[j].name) != 0){
+                    send(roomList.group[i].members.clients[j].FD, &header, sizeof(header), 0);
+                    send(roomList.group[i].members.clients[j].FD, reader.buffer, header.payloadSize, 0);
+                } 
+            }
+            break;
+        }
+    }
+
+    free(reader.buffer);
+    free(groupName);
+    free(senderName);
 }
 
 void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
@@ -162,6 +191,7 @@ void managePeerChat(struct packetHeader header, int sourceClientFD){
     send(destinationFD, &header, sizeof(header), 0);
     send(destinationFD, reader.buffer, header.payloadSize, 0);
     free(pDestinationFD);
+    free(reader.buffer);
 }
 
 void manageLeftClient(int sourceClientFD){

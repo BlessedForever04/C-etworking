@@ -90,19 +90,33 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
     }
 
     if(argc == 2){
-        if(strcmp(argv[0], "/open") == 0){
+        if(strcmp(argv[0], "/chat") == 0){
             // Chatting with other users on server (peer to peer communication)
             for(size_t i = 0; i < userList.size; i++){
                 if(strcmp(argv[1], userList.clients[i].name) == 0){
                     isNotFound = 0;
                     chatWithUser(&userList.clients[i], myName, mySocketFD, serverSocketFD);
+                    break;
                 }
             }
             if(isNotFound){
                 printf("User not found\n"); 
             }
+            else{
+                isNotFound = 1;
+            }
             return;
         }
+
+        if(strcmp(argv[0], "/open") == 0){
+            // Chatting within a group
+            for(size_t i = 0; i < groupList.size; i++){
+                if(strcmp(argv[1], groupList.group[i].name) == 0){
+                    isNotFound = 0;
+                    chatWithinGroup(argv[1], myName, mySocketFD, serverSocketFD);
+                }
+            }
+        } 
 
         if(strcmp(argv[1], "delete_group") == 0){
             // implement deletion of group

@@ -10,3 +10,4 @@ void manageNewClient(struct packetHeader header, int serverSocketFD);
 void manageNewRoom(struct packetHeader header, int sourceClientFD);
 void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD);
 void sendGroupDetailsToAddedMember(struct group group, int newMemberFD);
+void manageGroupChat(struct packetHeader header, int sourceClientFD);
