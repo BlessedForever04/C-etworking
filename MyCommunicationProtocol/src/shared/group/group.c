@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../client_manager/client_manager.h"
 #include "../model.h"
 #include "group.h"
 
@@ -57,15 +58,18 @@ void addGroupInGroupList(struct groupList *groupList, struct group newGroup){
         groupList->group = temp;
     }
 
-    groupList->group[groupList->size].admin.FD = newGroup.admin.FD;
-    groupList->group[groupList->size].members = (struct clientList){NULL, 0, 0};
-
-    groupList->group[groupList->size].admin.name = malloc(strlen(newGroup.admin.name) + 1);
-    memcpy(groupList->group[groupList->size].admin.name, newGroup.admin.name, strlen(newGroup.admin.name) + 1);
     groupList->group[groupList->size].name = malloc(strlen(newGroup.name) + 1);
     memcpy(groupList->group[groupList->size].name, newGroup.name, strlen(newGroup.name) + 1);
     groupList->group[groupList->size].description = malloc(strlen(newGroup.description) + 1);
     memcpy(groupList->group[groupList->size].description, newGroup.description, strlen(newGroup.description) + 1);
+    groupList->group[groupList->size].admin.name = malloc(strlen(newGroup.admin.name) + 1);
+    memcpy(groupList->group[groupList->size].admin.name, newGroup.admin.name, strlen(newGroup.admin.name) + 1);
+    groupList->group[groupList->size].admin.FD = newGroup.admin.FD;
+    groupList->group[groupList->size].members = (struct clientList){NULL, 0, 0};
+
+    for(size_t i = 0; i < newGroup.members.size; i++){
+        addClientInClientList(&groupList->group[groupList->size].members, newGroup.members.clients[i]);
+    }
 
     groupList->size++;
 }

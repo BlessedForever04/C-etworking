@@ -30,16 +30,17 @@ CLIENT_SOURCES := \
 	src/client/protocol/protocol.c \
 	src/client/shared_list/shared_list.c \
 	src/client/client.c \
+	src/shared/client_manager/client_manager.c \
 	src/shared/group/group.c \
 	src/shared/recv_all/recv_all.c \
 	src/shared/serializer/serializer.c 
 
 SERVER_SOURCES := \
-	src/server/client_manager/client_manager.c \
 	src/server/network/serverNetwork.c \
 	src/server/protocol/protocol.c \
 	src/server/shared_list/shared_list.c \
 	src/server/server.c \
+	src/shared/client_manager/client_manager.c \
 	src/shared/group/group.c \
 	src/shared/recv_all/recv_all.c \
 	src/shared/serializer/serializer.c

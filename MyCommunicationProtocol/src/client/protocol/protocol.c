@@ -7,6 +7,7 @@
 #include "../../shared/serializer/serializer.h"
 #include "../../shared/recv_all/recv_all.h"
 #include "../../shared/group/group.h"
+#include "../../shared/client_manager/client_manager.h"
 #include "../shared_list/shared_list.h"
 
 void manageClientProtocol(struct packetHeader header, int serverSocketFD){
@@ -57,7 +58,7 @@ void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD){
 
     for(size_t i = 0; i < groupList.size; i++){
         if(strcmp(groupName, groupList.group[i].name) == 0){
-            addUserInUserList(&groupList.group[i].members, newMember);
+            addClientInClientList(&groupList.group[i].members, newMember);
             break;
         }
     }
@@ -72,7 +73,7 @@ void manageNewGroup(struct packetHeader header, int serverSocketFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
     
-    struct group newGroup;
+    struct group newGroup = {0};
     newGroup.name = packetReadString(&reader);
     newGroup.description = packetReadString(&reader);
     newGroup.admin.name = packetReadString(&reader);
@@ -95,7 +96,7 @@ void addJoinedUserInUserList(struct packetHeader header, int serverSocketFD){
     memcpy(&newUser.FD, fd, sizeof(newUser.FD));
     newUser.name = packetReadString(&reader);
 
-    addUserInUserList(&userList, newUser);
+    addClientInClientList(&userList, newUser);
     free(reader.buffer);
     free(fd);
     free(newUser.name);
@@ -110,11 +111,11 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
         perror("recv");
         exit(EXIT_FAILURE);
     }
-    removeClientFromUserList(*leftUser);
+    removeUserFromUserList(*leftUser);
     free(leftUser);
 }
 
-void removeClientFromUserList(int leftUserFD){
+void removeUserFromUserList(int leftUserFD){
     for(size_t i = 0; i < userList.size; i++){
         if(userList.clients[i].FD == leftUserFD){
             userList.clients[i] = userList.clients[userList.size - 1];
@@ -122,29 +123,6 @@ void removeClientFromUserList(int leftUserFD){
             break;
         }
     }
-}
-
-void addUserInUserList(struct clientList *list, struct client newClient){
-    if(list->size == list->capacity){
-        if(list->capacity == 0) list->capacity = 1;
-        list->capacity = list->capacity * 2;
-
-        struct client *temp = realloc(list->clients, sizeof(struct client) * list->capacity);
-        if(temp == NULL){
-            perror("realloc");
-            exit(EXIT_FAILURE);
-        }
-        list->clients = temp;
-    }
-
-    list->clients[list->size].FD = newClient.FD;
-    list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
-    if(list->clients[list->size].name == NULL){
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-    strcpy(list->clients[list->size].name, newClient.name);
-    list->size++;
 }
 
 void receiveAndPrintMessage(struct packetHeader header, int socketFD){
@@ -173,7 +151,7 @@ void receiveUserList(struct packetHeader header, int socketFD){
         user.name = packetReadString(&reader);
         uint8_t *fd = packetReadBytes(&reader, sizeof(int));
         memcpy(&user.FD, fd, sizeof(user.FD));
-        addUserInUserList(&userList, user);
+        addClientInClientList(&userList, user);
         free(user.name);
         free(fd);
     }
@@ -197,7 +175,7 @@ void receiveGroupList(struct packetHeader header, int socketFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, socketFD);
 
-    struct group newGroup;
+    struct group newGroup = {0};
     newGroup.name = packetReadString(&reader);
     newGroup.description = packetReadString(&reader);
     newGroup.admin.name = packetReadString(&reader);
@@ -210,8 +188,18 @@ void receiveGroupList(struct packetHeader header, int socketFD){
         FD = packetReadBytes(&reader, sizeof(int));
         memcpy(&groupMember.FD, FD, sizeof(int));
 
-        addUserInUserList(&newGroup.members, groupMember);
+        addClientInClientList(&newGroup.members, groupMember);
         free(groupMember.name);
         free(FD);
+    }
+
+    addGroupInGroupList(&groupList, newGroup);
+
+    free(newGroup.name);
+    free(newGroup.description);
+    free(newGroup.admin.name);
+
+    for(size_t i = 0; i < newGroup.members.size; i++){
+        free(newGroup.members.clients[i].name);
     }
 }

@@ -5,6 +5,7 @@
 #include "../main_commands/mainCommands.h"
 #include "commandManager.h"
 #include "../../../shared/group/group.h"
+#include "../../../shared/client_manager/client_manager.h"
 #include "../../protocol/protocol.h"
 #include "../../shared_list/shared_list.h"
 
@@ -58,7 +59,7 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
                     printf("Error: Group doesn't exist, please enter a valid group name!\n");
                 }
                 else{
-                    addUserInUserList(&group->members, *newMember);
+                    addClientInClientList(&group->members, *newMember);
                     shareAddedMemberDetailsToServer(group->name, *newMember, serverSocketFD);
                 }
             }

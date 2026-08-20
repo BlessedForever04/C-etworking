@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../../shared/serializer/serializer.h"
-#include "../../shared/recv_all/recv_all.h"
+#include "../serializer/serializer.h"
+#include "../recv_all/recv_all.h"
 
-void removeClientFromClientList(int clientFD){
-    for(size_t i = 0; i < clientList.size; i++){
-        if(clientList.clients[i].FD == clientFD){
-            clientList.clients[i] = clientList.clients[clientList.size - 1];
-            free(clientList.clients[--clientList.size].name);
+void removeClientFromClientList(struct clientList *clientList, int clientFD){
+    for(size_t i = 0; i < clientList->size; i++){
+        if(clientList->clients[i].FD == clientFD){
+            clientList->clients[i] = clientList->clients[clientList->size - 1];
+            free(clientList->clients[--clientList->size].name);
             break;
         }
     }
@@ -34,31 +34,31 @@ struct client getClientName(struct packetHeader header, int clientFD){
     return newClient;
 }
 
-void addClientInClientList(struct clientList *list, struct client newClient){
-    if(list->size == list->capacity){
-        if(list->capacity == 0) list->capacity = 1;
-        list->capacity = list->capacity * 2;
-        struct client *temp = realloc(list->clients, sizeof(struct client) * list->capacity);
+void addClientInClientList(struct clientList *clientList, struct client newClient){
+    if(clientList->size == clientList->capacity){
+        if(clientList->capacity == 0) clientList->capacity = 1;
+        clientList->capacity = clientList->capacity * 2;
+        struct client *temp = realloc(clientList->clients, sizeof(struct client) * clientList->capacity);
         if(temp == NULL){
             perror("realloc");
             exit(EXIT_FAILURE);
         }
         else{
-            list->clients = temp;
+            clientList->clients = temp;
         }
     }
 
-    list->clients[list->size].FD = newClient.FD;
-    list->clients[list->size].name = malloc(strlen(newClient.name) + 1);
-    if(list->clients[list->size].name == NULL){
+    clientList->clients[clientList->size].FD = newClient.FD;
+    clientList->clients[clientList->size].name = malloc(strlen(newClient.name) + 1);
+    if(clientList->clients[clientList->size].name == NULL){
         perror("malloc");
         exit(EXIT_FAILURE);
     }
-    strcpy(list->clients[list->size].name, newClient.name);
-    list->size++;
+    strcpy(clientList->clients[clientList->size].name, newClient.name);
+    clientList->size++;
 }
 
-void sendClientListToClient(int clientFD){
+void sendClientListToClient(struct clientList clientList, int clientFD){
     uint32_t payloadSize = 0;
     //            (clientNameLen    +    socketFD) * number of connected clients
     payloadSize = (sizeof(uint32_t) + sizeof(int)) * clientList.size; 
@@ -85,7 +85,7 @@ void sendClientListToClient(int clientFD){
     free(writer.buffer);
 }
 
-void introduceNewClient(struct client newClient){
+void introduceNewClient(struct clientList clientList, struct client newClient){
     struct packetHeader header;
     header.type = PACKET_USER_JOINED_SERVER;
     // SocketFD + string length prefix + name string
@@ -102,6 +102,5 @@ void introduceNewClient(struct client newClient){
         // Sending buffer
         send(clientList.clients[i].FD, writer.buffer, header.payloadSize, 0);
     }
-
     free(writer.buffer);
 }

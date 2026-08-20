@@ -4,7 +4,7 @@
 
 #include "protocol.h"
 #include "../../shared/model.h"
-#include "../client_manager/client_manager.h"
+#include "../../shared/client_manager/client_manager.h"
 #include "../../shared/recv_all/recv_all.h"
 #include "../../shared/serializer/serializer.h"
 #include "../../shared/group/group.h"
@@ -122,7 +122,7 @@ void manageNewRoom(struct packetHeader header, int sourceClientFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
 
-    struct group newGroup;
+    struct group newGroup = {0};
     newGroup.name = packetReadString(&reader); // Group name
     newGroup.description = packetReadString(&reader); // Group description
     newGroup.admin.name = packetReadString(&reader); // Group admin's name
@@ -143,10 +143,10 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
     if(newClient.name == NULL){
         return;
     }
-    introduceNewClient(newClient);
+    introduceNewClient(clientList, newClient);
     printf("User's name is : %s", newClient.name);
     addClientInClientList(&clientList, newClient);
-    sendClientListToClient(sourceClientFD);
+    sendClientListToClient(clientList, sourceClientFD);
     free(newClient.name);
 }
 
@@ -165,7 +165,7 @@ void managePeerChat(struct packetHeader header, int sourceClientFD){
 }
 
 void manageLeftClient(int sourceClientFD){
-    removeClientFromClientList(sourceClientFD);
+    removeClientFromClientList(&clientList, sourceClientFD);
 
     struct packetHeader header;
     header.type = PACKET_USER_LEFT;
