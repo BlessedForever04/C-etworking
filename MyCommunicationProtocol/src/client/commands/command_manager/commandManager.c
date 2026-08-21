@@ -33,7 +33,6 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
 
             // Input from user
             getUserAndGroupName(&memberName, &groupName);
-            printf("Returned after getting the member name and grp name\n");
 
             struct client *newMember = NULL;
             for(size_t i = 0; i < userList.size; i++){
@@ -114,11 +113,18 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
                 if(strcmp(argv[1], groupList.group[i].name) == 0){
                     isNotFound = 0;
                     chatWithinGroup(argv[1], myName, mySocketFD, serverSocketFD);
+                    break;
                 }
+            }
+            if(isNotFound){
+                printf("Error: Group doesn't exist, please enter a valid group name!\n");
+            }
+            else{
+                isNotFound = 1;
             }
         } 
 
-        if(strcmp(argv[1], "delete_group") == 0){
+        if(strcmp(argv[1], "/delete_group") == 0){
             // implement deletion of group
             return;
         }
