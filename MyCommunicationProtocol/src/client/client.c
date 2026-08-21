@@ -53,8 +53,7 @@ int main(){
     // Thread for receiving data from server and printing on terminal
     pthread_t receiveThread;
     pthread_create(&receiveThread, NULL, receiveDataFromServer, &socketAndName);
-    int mySocketFD = getMySocketFD(myName);
-
+    
     // Sending header for name
     send(socketFD, &introHeader, sizeof(introHeader), 0);
     
@@ -65,7 +64,9 @@ int main(){
     struct messagePacket message;
     message.sender = malloc(strlen(myName) + 1);
     snprintf(message.sender, strlen(myName) + 1, "%s", myName);
-
+    
+    // Found the culprit, ts is dangerous, have to deal with it, its only used for creating group (newGruop.admin.FD = ts); T_T
+    int mySocketFD = getMySocketFD(myName);
     // Main loop
     while(1){
         // Client writing message in main external loop

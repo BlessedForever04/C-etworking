@@ -30,9 +30,11 @@ void *receiveDataFromServer(void *arg){ // here the function has to be of *funct
         struct packetHeader header = {0};
 
         while(1){
-                int byteReceived = recv(serverSocketFD, &header, sizeof(header), 0);
-                if(byteReceived > 0){
+                ssize_t byteReceived = recvAll(serverSocketFD, &header, sizeof(header));
+                if(byteReceived == (ssize_t)sizeof(header)){
                         manageClientProtocol(header, serverSocketFD);
+                } else {
+                        break;
                 }
         }
         return NULL;

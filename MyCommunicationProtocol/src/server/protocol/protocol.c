@@ -53,7 +53,7 @@ void manageGroupChat(struct packetHeader header, int sourceClientFD){
     for(size_t i = 0; i < roomList.size; i++){
         if(strcmp(groupName, roomList.group[i].name) == 0){
             for(size_t j = 0; j < roomList.group[i].members.size; j++){
-                if(strcmp(senderName, roomList.group[i].members.clients[j].name) != 0){
+                if(roomList.group[i].members.clients[j].FD != sourceClientFD){
                     send(roomList.group[i].members.clients[j].FD, &header, sizeof(header), 0);
                     send(roomList.group[i].members.clients[j].FD, reader.buffer, header.payloadSize, 0);
                 } 
@@ -101,6 +101,9 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
 
     // Sending the new member info to all the group members
     for(size_t i = 0; i < group->members.size; i++){
+        if(group->members.clients[i].FD == newMember.FD){
+            continue;
+        }
         send(group->members.clients[i].FD, &header, sizeof(header), 0);
         send(group->members.clients[i].FD, reader.buffer, header.payloadSize, 0);
     }
@@ -114,13 +117,10 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD){
 void sendGroupDetailsToAddedMember(struct group group, int newMemberFD){
     struct packetHeader header;
     header.type = PACKET_GROUP_LIST;
-    header.payloadSize = sizeof(uint32_t) +
-                         strlen(group.name) +
-                         sizeof(uint32_t) +
-                         strlen(group.description) +
-                         sizeof(uint32_t) +
-                         strlen(group.admin.name) +
-                         sizeof(int);
+    header.payloadSize = sizeof(uint32_t) + strlen(group.name) +
+                         sizeof(uint32_t) + strlen(group.description) +
+                         sizeof(uint32_t) + strlen(group.admin.name) +
+                         sizeof(int); // Admin FD
 
     for(size_t i = 0; i < group.members.size; i++){
         header.payloadSize += sizeof(uint32_t) + strlen(group.members.clients[i].name) + sizeof(int); 
@@ -155,12 +155,17 @@ void manageNewRoom(struct packetHeader header, int sourceClientFD){
     newGroup.name = packetReadString(&reader); // Group name
     newGroup.description = packetReadString(&reader); // Group description
     newGroup.admin.name = packetReadString(&reader); // Group admin's name
-    newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int)); // Group admin's FD
-
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    // Trust the server-side socket that created the room, not a client-provided FD.
+    newGroup.admin.FD = sourceClientFD;
+ 
+    // Adding the admin in the group created
+    addClientInClientList(&newGroup.members, newGroup.admin);
     // Adding group in local list
     addGroupInGroupList(&roomList, newGroup);
 
     // freeing memory
+    free(FD);
     free(reader.buffer);
     free(newGroup.name);
     free(newGroup.description);

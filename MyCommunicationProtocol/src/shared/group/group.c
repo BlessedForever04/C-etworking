@@ -34,6 +34,9 @@ struct group createGroup(int adminFD, char *adminName){
     newGroup.description = malloc(strlen(groupDescription) + 1);
     newGroup.admin.name = malloc(strlen(adminName) + 1);
     newGroup.members = (struct clientList){NULL, 0, 0};
+
+    struct client admin = {adminName, adminFD};
+    addClientInClientList(&newGroup.members, admin);
     
     memcpy(newGroup.name, groupName, strlen(groupName) + 1);
     memcpy(newGroup.description, groupDescription, strlen(groupDescription) + 1);

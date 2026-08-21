@@ -98,6 +98,7 @@ void manageNewGroup(struct packetHeader header, int serverSocketFD){
     newGroup.admin.name = packetReadString(&reader);
     newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int));
 
+    addClientInClientList(&newGroup.members, newGroup.admin);
     addGroupInGroupList(&groupList, newGroup);
 
     // freeing memory

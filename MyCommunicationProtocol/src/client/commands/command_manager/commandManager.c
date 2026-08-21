@@ -36,7 +36,6 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
 
             struct client *newMember = NULL;
             for(size_t i = 0; i < userList.size; i++){
-                printf("Comparing :%s with %s\n", memberName, userList.clients[i].name);
                 if(strcmp(memberName, userList.clients[i].name) == 0){
                     newMember = &userList.clients[i];
                     break;
