@@ -1,9 +1,10 @@
-#include "../../shared/model.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
+
 #include "protocol.h"
+#include "../../shared/model.h"
 #include "../../shared/serializer/serializer.h"
 #include "../../shared/recv_all/recv_all.h"
 #include "../../shared/group/group.h"
@@ -42,11 +43,64 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
 
         case PACKET_GROUP_CHAT:
         manageGroupChat(header, serverSocketFD);
+        break;
+
+        case PACKET_KICK_GROUP_MEMBER:
+        manageKickedMember(header, serverSocketFD);
+        break;
+
+        case PACKET_KICKED:
+        handleDepression(header, serverSocketFD);
+        break;
 
         default:
+        handleItBro();
         // Default case handling
         break;
     }
+}
+
+void handleItBro(){
+    printf("What the dog going??\n");
+}
+
+void handleDepression(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+ 
+    char *groupName = packetReadString(&reader);
+    removeGroupFromGroupList(&groupList, groupName);    
+    printf("You are kicked by admin!\n");
+
+    char *temp = "NULL\0";
+    free(currentCommunication);
+    currentCommunication = malloc(strlen(temp) + 1);
+    strcpy(currentCommunication, temp);
+    free(reader.buffer);
+    free(groupName);
+}
+
+void manageKickedMember(struct packetHeader header, int socketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, socketFD);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));  
+    int targetFD;
+    memcpy(&targetFD, FD, sizeof(int));
+    char *userName = packetReadString(&reader);
+    char *groupName = packetReadString(&reader);
+
+    for(size_t i = 0; i < groupList.size; i++){
+        if(strcmp(groupList.group[i].name, groupName) == 0){
+            removeClientFromClientList(&groupList.group[i].members, targetFD);  
+            printf("%s got kicked by admin!\n", userName);            
+            break;
+        }
+    }
+
+    free(reader.buffer);
+    free(FD);
+    free(userName);
+    free(groupName);
 }
 
 void manageGroupChat(struct packetHeader header, int socketFD){
@@ -131,18 +185,8 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
         perror("recv");
         exit(EXIT_FAILURE);
     }
-    removeUserFromUserList(*leftUser);
+    removeClientFromClientList(&userList, *leftUser);
     free(leftUser);
-}
-
-void removeUserFromUserList(int leftUserFD){
-    for(size_t i = 0; i < userList.size; i++){
-        if(userList.clients[i].FD == leftUserFD){
-            userList.clients[i] = userList.clients[userList.size - 1];
-            free(userList.clients[--userList.size].name);
-            break;
-        }
-    }
 }
 
 void receiveAndPrintMessage(struct packetHeader header, int socketFD){

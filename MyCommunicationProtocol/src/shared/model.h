@@ -24,15 +24,16 @@ typedef enum {
     PACKET_USER_JOINED, // Header + name
     PACKET_USER_LEFT, // Header
 
-    // Rooms / Channels / GROUPS
+    // Rooms / Channels / Groups
     PACKET_CREATE_ROOM, // Room name, description and password
     PACKET_DELETE_ROOM, // Room name and password
     PACKET_JOIN_ROOM, // Room name and password
+    PACKET_KICK_GROUP_MEMBER,
+    PACKET_KICKED,
     PACKET_LEAVE_ROOM, // Only header
-    PACKET_ROOM_INFO, // Room name
     
     // Administration
-    PACKET_KICK, // Username
+    PACKET_KICK_CLIENT, // Username
 
     // File
     PACKET_FILE, // Header + (uint32_t filenameSize + char *filename + uint32_t dataSize + uint8_t *data)

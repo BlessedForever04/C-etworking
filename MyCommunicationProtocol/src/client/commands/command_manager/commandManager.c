@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "../main_commands/mainCommands.h"
+#include "../internal_commands/internalCommands.h"
 #include "commandManager.h"
 #include "../../../shared/group/group.h"
 #include "../../../shared/client_manager/client_manager.h"
@@ -121,10 +122,17 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             else{
                 isNotFound = 1;
             }
+            return;
         } 
 
         if(strcmp(argv[1], "/delete_group") == 0){
             // implement deletion of group
+            return;
+        }
+
+        if(strcmp(argv[0], "/kick") == 0){            
+            // here currentCommunication is group's name
+            kickMemberAndShareOnServer(myName, argv[1], currentCommunication, serverSocketFD);
             return;
         }
     }

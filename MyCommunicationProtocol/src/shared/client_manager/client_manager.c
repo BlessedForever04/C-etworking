@@ -5,9 +5,9 @@
 #include "../serializer/serializer.h"
 #include "../recv_all/recv_all.h"
 
-void removeClientFromClientList(struct clientList *clientList, int clientFD){
+void removeClientFromClientList(struct clientList *clientList, int targetFD){
     for(size_t i = 0; i < clientList->size; i++){
-        if(clientList->clients[i].FD == clientFD){
+        if(clientList->clients[i].FD == targetFD){
             clientList->clients[i] = clientList->clients[clientList->size - 1];
             free(clientList->clients[--clientList->size].name);
             break;

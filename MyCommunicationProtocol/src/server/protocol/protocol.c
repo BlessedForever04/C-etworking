@@ -37,9 +37,55 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         manageGroupChat(header, sourceClientFD);
         break;
 
+    case PACKET_KICK_GROUP_MEMBER:
+        manageKickedMember(header, sourceClientFD);
+        break;
+
     default:
         break;
     }
+}
+
+void manageKickedMember(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    int targetFD;
+    memcpy(&targetFD, FD, sizeof(int));
+    char *userName = packetReadString(&reader);
+    char *groupName = packetReadString(&reader);
+
+    struct packetHeader kickHeader;
+    kickHeader.type = PACKET_KICKED;
+    kickHeader.payloadSize = sizeof(uint32_t) + strlen(groupName); // Group name
+
+    struct packetWriter writer;
+    packetWriterInIt(&writer, kickHeader.payloadSize);
+    packetWriteString(&writer, groupName);
+
+    // removing the client from group's member list from roomlist on server side and sharing details with members
+    for(size_t i = 0; i < roomList.size; i++){
+        if(strcmp(groupName, roomList.group[i].name) == 0){
+            for(size_t j = 0; j < roomList.group[i].members.size; j++){
+                if(roomList.group[i].members.clients[j].FD == targetFD){
+                    send(targetFD, &kickHeader, sizeof(kickHeader), 0);
+                    send(targetFD, writer.buffer, kickHeader.payloadSize, 0);
+                }
+                else{
+                    if(roomList.group[i].members.clients[j].FD != sourceClientFD){
+                        send(roomList.group[i].members.clients[j].FD, &header, sizeof(header), 0);
+                        send(roomList.group[i].members.clients[j].FD, reader.buffer, header.payloadSize, 0);
+                    }
+                }
+            }
+            removeClientFromClientList(&roomList.group[i].members, targetFD);
+            break;
+        }
+        break;
+    } 
+    free(FD);
+    free(userName);
+    free(groupName);
 }
 
 void manageGroupChat(struct packetHeader header, int sourceClientFD){
