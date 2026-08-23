@@ -53,10 +53,35 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
         handleDepression(header, serverSocketFD);
         break;
 
+        case PACKET_LEAVE_ROOM:
+        manageLeftGroupMember(header, serverSocketFD);
+        break;
+
         default:
         handleItBro();
         // Default case handling
         break;
+    }
+} 
+
+void manageLeftGroupMember(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    int targetFD;
+    memcpy(&targetFD, FD, sizeof(int));
+
+    char *userName = packetReadString(&reader);
+    char *groupName = packetReadString(&reader);
+
+    for(size_t i = 0; i < groupList.size; i++){
+        if(strcmp(groupList.group[i].name, groupName) == 0){
+            removeClientFromClientList(&groupList.group[i].members, targetFD);
+            if(strcmp(groupList.group[i].name, currentCommunication) == 0){
+                printf("%s left the chat!\n", userName);
+            }
+            break;
+        }
     }
 }
 

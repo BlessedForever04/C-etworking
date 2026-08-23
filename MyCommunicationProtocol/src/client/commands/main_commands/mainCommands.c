@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +9,7 @@
 #include "../../protocol/protocol.h"
 #include "../../shared_list/shared_list.h"
 #include "../internal_commands/internalCommands.h"
+#include "../../../shared/group/group.h"
 
 size_t lineSize = 0;
 
@@ -15,6 +17,41 @@ static void removeNewline(char *input){
     size_t length = strlen(input);
     if(length > 0 && input[strlen(input) - 1] == '\n'){
         input[length - 1] = '\0';
+    }
+}
+
+void leaveGroupAndInformServer(char *myName, char *groupName, int serverSocketFD){
+    int mySocketFD = 0;
+    for(size_t i = 0; i < groupList.size; i++){
+        if(strcmp(groupList.group[i].name, groupName) == 0){
+            for(size_t j = 0; j < groupList.group[i].members.size; i++){
+                if(strcmp(groupList.group[i].members.clients[j].name, myName) == 0){
+                    mySocketFD = groupList.group[i].members.clients[j].FD; 
+                    break;
+                }
+            }
+            struct packetHeader header;
+            header.type = PACKET_LEAVE_ROOM;
+            header.payloadSize = sizeof(int) +
+                                 sizeof(uint32_t) + strlen(myName) +
+                                 sizeof(uint32_t) + strlen(groupName);
+             
+            struct packetWriter writer;
+            packetWriterInIt(&writer, header.payloadSize);
+            packetWriteBytes(&writer, &mySocketFD, sizeof(int));
+            packetWriteString(&writer, myName);
+            packetWriteString(&writer, groupName);
+
+            // Sending stuff to server
+            send(serverSocketFD, &header, sizeof(header), 0);
+            send(serverSocketFD, writer.buffer, header.payloadSize, 0);
+
+            //Deleting the gruop from local list
+            removeGroupFromGroupList(&groupList, groupName);
+            printf("Left %s\n", groupName);
+            free(writer.buffer);
+            break;
+        }
     }
 }
 

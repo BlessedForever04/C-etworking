@@ -17,4 +17,5 @@ void manageNewMemberInGroup(struct packetHeader header, int serverSocketFD);
 void manageGroupChat(struct packetHeader header, int serverSocketFD);
 void manageKickedMember(struct packetHeader header, int socketFD);
 void handleDepression(struct packetHeader header, int serverSocketFD);
+void manageLeftGroupMember(struct packetHeader header, int serverSocketFD);
 void handleItBro();

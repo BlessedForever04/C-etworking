@@ -12,3 +12,4 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD);
 void sendGroupDetailsToAddedMember(struct group group, int newMemberFD);
 void manageGroupChat(struct packetHeader header, int sourceClientFD);
 void manageKickedMember(struct packetHeader header, int sourceClientFD);
+void handleLeftGroupMember(struct packetHeader header, int serverSocketFD);

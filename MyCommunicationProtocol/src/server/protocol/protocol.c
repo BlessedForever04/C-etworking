@@ -41,9 +41,42 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         manageKickedMember(header, sourceClientFD);
         break;
 
+    case PACKET_LEAVE_ROOM:
+        handleLeftGroupMember(header, sourceClientFD);
+        break;
+
     default:
         break;
     }
+}
+
+void handleLeftGroupMember(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+    uint8_t *FD = packetReadBytes(&reader, sizeof(int));
+    int targetFD;
+    memcpy(&targetFD, FD, sizeof(int));
+
+    char *userName = packetReadString(&reader);
+    char *groupName = packetReadString(&reader);
+
+    for(size_t i = 0; i < roomList.size; i++){
+        if(strcmp(roomList.group[i].name, groupName) == 0){
+            removeClientFromClientList(&roomList.group[i].members, targetFD);
+            for(size_t j = 0; j < roomList.group[i].members.size; j++){
+                if(roomList.group[i].members.clients[j].FD != sourceClientFD){
+                    send(roomList.group[i].members.clients[j].FD, &header, sizeof(header), 0);
+                    send(roomList.group[i].members.clients[j].FD, reader.buffer, header.payloadSize, 0);
+                }
+            }
+            break;
+        }
+    }
+
+    free(FD);
+    free(reader.buffer);
+    free(userName);
+    free(groupName);
 }
 
 void manageKickedMember(struct packetHeader header, int sourceClientFD){
@@ -83,6 +116,9 @@ void manageKickedMember(struct packetHeader header, int sourceClientFD){
         }
         break;
     } 
+
+    free(writer.buffer);
+    free(reader.buffer);
     free(FD);
     free(userName);
     free(groupName);

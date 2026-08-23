@@ -125,7 +125,12 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
             return;
         } 
 
-        if(strcmp(argv[1], "/delete_group") == 0){
+        if(strcmp(argv[0], "/leave_group") == 0){
+            leaveGroupAndInformServer(myName, argv[1], serverSocketFD);
+            return;
+        }
+
+        if(strcmp(argv[0], "/delete_group") == 0){
             // implement deletion of group
             return;
         }
