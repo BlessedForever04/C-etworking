@@ -22,20 +22,29 @@ static void removeNewline(char *input){
 
 void leaveGroupAndInformServer(char *myName, char *groupName, int serverSocketFD){
     int mySocketFD = 0;
+    bool foundMember = false;
+
     for(size_t i = 0; i < groupList.size; i++){
         if(strcmp(groupList.group[i].name, groupName) == 0){
-            for(size_t j = 0; j < groupList.group[i].members.size; i++){
+            for(size_t j = 0; j < groupList.group[i].members.size; j++){
                 if(strcmp(groupList.group[i].members.clients[j].name, myName) == 0){
-                    mySocketFD = groupList.group[i].members.clients[j].FD; 
+                    mySocketFD = groupList.group[i].members.clients[j].FD;
+                    foundMember = true;
                     break;
                 }
             }
+
+            if(!foundMember){
+                printf("You are not a member of %s\n", groupName);
+                return;
+            }
+
             struct packetHeader header;
             header.type = PACKET_LEAVE_ROOM;
             header.payloadSize = sizeof(int) +
                                  sizeof(uint32_t) + strlen(myName) +
                                  sizeof(uint32_t) + strlen(groupName);
-             
+
             struct packetWriter writer;
             packetWriterInIt(&writer, header.payloadSize);
             packetWriteBytes(&writer, &mySocketFD, sizeof(int));
@@ -46,8 +55,11 @@ void leaveGroupAndInformServer(char *myName, char *groupName, int serverSocketFD
             send(serverSocketFD, &header, sizeof(header), 0);
             send(serverSocketFD, writer.buffer, header.payloadSize, 0);
 
-            //Deleting the gruop from local list
+            // Deleting the group from local list
             removeGroupFromGroupList(&groupList, groupName);
+            free(currentCommunication);
+            currentCommunication = malloc(strlen("NULL") + 1);
+            strcpy(currentCommunication, "NULL");
             printf("Left %s\n", groupName);
             free(writer.buffer);
             break;
