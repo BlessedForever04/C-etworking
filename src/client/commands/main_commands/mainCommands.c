@@ -89,6 +89,11 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
         if(strcmp(message.message, "/back\n") == 0){
             break;
         }
+
+        if(strcmp(message.message, "/send\n") == 0){
+            sendData(user->FD);
+            continue;
+        }
         struct packetHeader header = {0};
         
         // Handles internal commands

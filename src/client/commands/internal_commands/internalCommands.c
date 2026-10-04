@@ -1,9 +1,36 @@
 #include "../../shared_list/shared_list.h"
 #include "../../../shared/serializer/serializer.h"
 #include "../../../shared/client_manager/client_manager.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/sendfile.h>
+#include <sys/types.h>
+
+void sendData(int destinationFD){
+    char *file_name;
+    size_t n = 0;
+
+    printf("Enter file name:");
+    getline(&file_name, &n, stdin);
+
+    file_name[strlen(file_name) - 1] = '\0';
+
+    FILE *file = fopen(file_name, "rb");
+    if(file == NULL){
+        printf("Error: File doesn't exist, enter correct name.\n");
+        return;
+    }
+    else{
+        off_t *offset; 
+        uint64_t size = 0;
+        sendfile(destinationFD, file, offset, size);
+    }
+
+    fclose(file);
+    free(file_name);
+}
 
 void printGroupInformation(char *groupName){
     for (size_t i = 0; i < groupList.size; i++){

@@ -1,12 +1,8 @@
 #include <sys/socket.h>
-#include <string.h>
 #include <pthread.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "serverNetwork.h"
 #include "../protocol/protocol.h"
-#include "../../client/protocol/protocol.h"
-#include "../client_manager/client_manager.h"
 #include "../../shared/recv_all/recv_all.h"
 
 int createTCPIpv4Socket(){
