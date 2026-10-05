@@ -1,7 +1,11 @@
+#include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "protocol.h"
 #include "../../shared/model.h"
@@ -57,12 +61,37 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
         manageLeftGroupMember(header, serverSocketFD);
         break;
 
+        case PACKET_FILE:
+        manageIncomingFile(header, serverSocketFD);
+        break;
+
         default:
         handleItBro();
         // Default case handling
         break;
     }
 } 
+
+void manageIncomingFile(struct packetHeader header, int serverSocketFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+
+    // Header.payLoadSize = destinationFD + strlen(file_name) + file_name + st.st_size : file_size
+    uint8_t *destinationFD = packetReadBytes(&reader, sizeof(uint8_t));
+    char *file_name = packetReadString(&reader);
+    uint8_t *temp = packetReadBytes(&reader, sizeof(off_t));
+    size_t file_size;
+    memcpy(&file_size, temp, sizeof(size_t));
+    
+    int fileFD = open(file_name, O_CREAT);
+    write(fileFD, reader.offset, file_size);
+    close(fileFD);
+
+    free(reader.buffer);
+    free(file_name);
+    free(destinationFD);
+    free(temp);
+}
 
 void manageLeftGroupMember(struct packetHeader header, int serverSocketFD){
     struct packetReader reader;

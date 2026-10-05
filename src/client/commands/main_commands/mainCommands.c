@@ -91,7 +91,7 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
         }
 
         if(strcmp(message.message, "/send\n") == 0){
-            sendData(user->FD);
+            sendFile(serverSocketFD, user->FD);
             continue;
         }
         struct packetHeader header = {0};

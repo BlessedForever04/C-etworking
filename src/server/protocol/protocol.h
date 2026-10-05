@@ -1,6 +1,7 @@
 #pragma once
 #include "../../shared/model.h"
 
+void handleFileTransfer(struct packetHeader header, int sourceClientFD);
 void manageServerProtocol(struct packetHeader header, int socketFD);
 void manageNotice(void);
 void manageBroadcast(int socketFD, struct packetHeader header);

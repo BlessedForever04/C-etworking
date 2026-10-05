@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include "protocol.h"
 #include "../../shared/model.h"
@@ -45,9 +46,33 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         handleLeftGroupMember(header, sourceClientFD);
         break;
 
+    case PACKET_FILE:
+        handleFileTransfer(header, sourceClientFD);
+        break;
+
     default:
         break;
     }
+}
+
+void handleFileTransfer(struct packetHeader header, int sourceClientFD){
+    struct packetReader reader;
+    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+
+    uint8_t *temp = packetReadBytes(&reader, sizeof(uint8_t));
+    int destinationFD;
+    memcpy(&destinationFD, temp, sizeof(int));
+
+    for(size_t i = 0; i < clientList.size; i++){
+        if(destinationFD == clientList.clients[i].FD){
+            send(destinationFD, &header, sizeof(header), 0);
+            send(destinationFD, reader.buffer, header.payloadSize, 0);
+            break;
+        }
+    }
+
+    free(temp);
+    free(reader.buffer);
 }
 
 void handleLeftGroupMember(struct packetHeader header, int sourceClientFD){

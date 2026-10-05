@@ -7,8 +7,11 @@
 #include <stdio.h>
 #include <sys/sendfile.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
-void sendData(int destinationFD){
+void sendFile(int serverSocketFD, int destinationFD){
     char *file_name;
     size_t n = 0;
 
@@ -17,18 +20,42 @@ void sendData(int destinationFD){
 
     file_name[strlen(file_name) - 1] = '\0';
 
-    FILE *file = fopen(file_name, "rb");
-    if(file == NULL){
+    int file = open(file_name, O_RDONLY);
+
+    if(file < 0){
         printf("Error: File doesn't exist, enter correct name.\n");
         return;
     }
     else{
-        off_t *offset; 
-        uint64_t size = 0;
-        sendfile(destinationFD, file, offset, size);
-    }
+        struct stat st;
+        if(fstat(file, &st) < 0) perror("fstat");
+        off_t offset = 0;
+        struct packetWriter writer;
 
-    fclose(file);
+        //                         length of name   + name              + file size
+        packetWriterInIt(&writer, (sizeof(uint32_t) + strlen(file_name) + sizeof(uint32_t)));
+        packetWriteBytes(&writer, &destinationFD, sizeof(int));
+        packetWriteString(&writer, file_name);
+        packetWriteBytes(&writer, &st.st_size, sizeof(st.st_size));
+        
+        struct packetHeader header;
+        header.type = PACKET_FILE;
+        header.payloadSize = writer.size;
+
+        send(serverSocketFD, &header, sizeof(header), 0);
+        send(serverSocketFD, writer.buffer, writer.size, 0); 
+
+        int remaining = st.st_size;
+
+        printf("Remaining b4: %d", remaining);
+
+        while(remaining > 0){
+            ssize_t sent = sendfile(serverSocketFD, file, &offset, remaining);
+            remaining -= sent; 
+            printf("Remaining ftr: %d", remaining);
+        }
+    }
+    close(file);
     free(file_name);
 }
 

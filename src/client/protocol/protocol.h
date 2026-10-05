@@ -4,6 +4,7 @@
 
 extern struct clientList userList;
 
+void manageIncomingFile(struct packetHeader header, int serverSocketFD);
 void manageClientProtocol(struct packetHeader header, int socketFD);
 void receiveAndPrintMessage(struct packetHeader header, int socketFD);
 void receiveUserList(struct packetHeader header, int socketFD);
