@@ -19,7 +19,6 @@ void sendFile(int serverSocketFD, int destinationFD){
     getline(&file_name, &n, stdin);
 
     file_name[strlen(file_name) - 1] = '\0';
-
     int file = open(file_name, O_RDONLY);
 
     if(file < 0){
@@ -30,29 +29,26 @@ void sendFile(int serverSocketFD, int destinationFD){
         struct stat st;
         if(fstat(file, &st) < 0) perror("fstat");
         off_t offset = 0;
-        struct packetWriter writer;
+        struct packetWriter file_information_buffer;
 
-        //                         length of name   + name              + file size
-        packetWriterInIt(&writer, (sizeof(uint32_t) + strlen(file_name) + sizeof(uint32_t)));
-        packetWriteBytes(&writer, &destinationFD, sizeof(int));
-        packetWriteString(&writer, file_name);
-        packetWriteBytes(&writer, &st.st_size, sizeof(st.st_size));
+        //                         destinationFD + length of name   + name              + file size
+        packetWriterInIt(&file_information_buffer, (sizeof(int) + sizeof(uint32_t) + strlen(file_name) + sizeof(st.st_size)));
+        packetWriteBytes(&file_information_buffer, &destinationFD, sizeof(int));
+        packetWriteString(&file_information_buffer, file_name);
+        packetWriteBytes(&file_information_buffer, &st.st_size, sizeof(st.st_size));
         
         struct packetHeader header;
         header.type = PACKET_FILE;
-        header.payloadSize = writer.size;
+        header.payloadSize = file_information_buffer.size;
 
         send(serverSocketFD, &header, sizeof(header), 0);
-        send(serverSocketFD, writer.buffer, writer.size, 0); 
+        send(serverSocketFD, file_information_buffer.buffer, file_information_buffer.size, 0); 
 
         int remaining = st.st_size;
-
-        printf("Remaining b4: %d", remaining);
 
         while(remaining > 0){
             ssize_t sent = sendfile(serverSocketFD, file, &offset, remaining);
             remaining -= sent; 
-            printf("Remaining ftr: %d", remaining);
         }
     }
     close(file);

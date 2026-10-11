@@ -73,21 +73,38 @@ void manageClientProtocol(struct packetHeader header, int serverSocketFD){
 } 
 
 void manageIncomingFile(struct packetHeader header, int serverSocketFD){
-    struct packetReader reader;
-    packetReaderInIt(&reader, header.payloadSize, serverSocketFD);
+    struct packetReader file_information_buffer;
+    packetReaderInIt(&file_information_buffer, header.payloadSize, serverSocketFD);
 
     // Header.payLoadSize = destinationFD + strlen(file_name) + file_name + st.st_size : file_size
-    uint8_t *destinationFD = packetReadBytes(&reader, sizeof(uint8_t));
-    char *file_name = packetReadString(&reader);
-    uint8_t *temp = packetReadBytes(&reader, sizeof(off_t));
-    size_t file_size;
-    memcpy(&file_size, temp, sizeof(size_t));
-    
-    int fileFD = open(file_name, O_CREAT);
-    write(fileFD, reader.offset, file_size);
-    close(fileFD);
+    uint8_t *destinationFD = packetReadBytes(&file_information_buffer, sizeof(int));
+    char *file_name = packetReadString(&file_information_buffer);
+    uint8_t *temp = packetReadBytes(&file_information_buffer, sizeof(off_t));
+    off_t file_size;
+    memcpy(&file_size, temp, sizeof(off_t));
+ 
+    // Here open is declared as :  int open(const char *path, int flags, ... mode_t mode);
+    // Here flags and mode is just a number which represents flag value and mode
+    // Read man 2 open, mode section to know more, 0644 is no magic number XD
+    int fileFD = open(file_name, O_WRONLY | O_CREAT, 0644);
 
-    free(reader.buffer);
+    int buffer_size = 1024 * 1024;
+    char buffer[buffer_size];
+
+    while(file_size > 0){
+        size_t want = file_size < buffer_size ? file_size : buffer_size;
+        size_t receivedBytes = recv(serverSocketFD, buffer, want, 0);
+        printf("received Bytes: %ld", receivedBytes);
+        if(receivedBytes <= 0){
+            printf("Error: received 0 bytes during ftp\n");
+            return;
+        }
+        file_size -= receivedBytes;
+        write(fileFD, buffer, receivedBytes);
+    }
+
+    close(fileFD);
+    free(file_information_buffer.buffer);
     free(file_name);
     free(destinationFD);
     free(temp);

@@ -1,7 +1,7 @@
 #pragma once
 #include "../../shared/model.h"
 
-void handleFileTransfer(struct packetHeader header, int sourceClientFD);
+void manageFileTransfer(struct packetHeader header, int sourceClientFD);
 void manageServerProtocol(struct packetHeader header, int socketFD);
 void manageNotice(void);
 void manageBroadcast(int socketFD, struct packetHeader header);
@@ -13,4 +13,4 @@ void manageNewMemberInRoom(struct packetHeader header, int sourceClientFD);
 void sendGroupDetailsToAddedMember(struct group group, int newMemberFD);
 void manageGroupChat(struct packetHeader header, int sourceClientFD);
 void manageKickedMember(struct packetHeader header, int sourceClientFD);
-void handleLeftGroupMember(struct packetHeader header, int serverSocketFD);
+void manageLeftGroupMember(struct packetHeader header, int serverSocketFD);

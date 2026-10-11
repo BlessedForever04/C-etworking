@@ -43,11 +43,11 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
         break;
 
     case PACKET_LEAVE_ROOM:
-        handleLeftGroupMember(header, sourceClientFD);
+        manageLeftGroupMember(header, sourceClientFD);
         break;
 
     case PACKET_FILE:
-        handleFileTransfer(header, sourceClientFD);
+        manageFileTransfer(header, sourceClientFD);
         break;
 
     default:
@@ -55,27 +55,44 @@ void manageServerProtocol(struct packetHeader header, int sourceClientFD){
     }
 }
 
-void handleFileTransfer(struct packetHeader header, int sourceClientFD){
-    struct packetReader reader;
-    packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
+void manageFileTransfer(struct packetHeader header, int sourceClientFD){
+    struct packetReader file_information_buffer;
+    packetReaderInIt(&file_information_buffer, header.payloadSize, sourceClientFD);
 
-    uint8_t *temp = packetReadBytes(&reader, sizeof(uint8_t));
+    uint8_t *temp = packetReadBytes(&file_information_buffer, sizeof(int));
     int destinationFD;
     memcpy(&destinationFD, temp, sizeof(int));
-
-    for(size_t i = 0; i < clientList.size; i++){
-        if(destinationFD == clientList.clients[i].FD){
-            send(destinationFD, &header, sizeof(header), 0);
-            send(destinationFD, reader.buffer, header.payloadSize, 0);
-            break;
-        }
-    }
-
     free(temp);
-    free(reader.buffer);
+
+    char *file_name = packetReadString(&file_information_buffer);
+    temp = packetReadBytes(&file_information_buffer, sizeof(off_t));
+    off_t file_size;
+    memcpy(&file_size, temp, sizeof(off_t));
+
+    int buffer_size = 1024 * 1024;
+    char buffer[buffer_size];
+    ssize_t receivedBytes = 0;
+
+    send(destinationFD, &header, sizeof(header), 0);
+    send(destinationFD, file_information_buffer.buffer, header.payloadSize, 0);
+
+    while(file_size > 0){
+        receivedBytes = recv(sourceClientFD, buffer, buffer_size, 0);
+        printf("receivedBytes of file: %ld", receivedBytes);
+        if(receivedBytes < 0){
+            printf("Error: Received 0 Bytes during ftp\n");
+            return;
+        }
+        file_size -= receivedBytes;
+        send(destinationFD, buffer, receivedBytes, 0);
+    } 
+
+    free(file_name);
+    free(temp);
+    free(file_information_buffer.buffer);
 }
 
-void handleLeftGroupMember(struct packetHeader header, int sourceClientFD){
+void manageLeftGroupMember(struct packetHeader header, int sourceClientFD){
     struct packetReader reader;
     packetReaderInIt(&reader, header.payloadSize, sourceClientFD);
     uint8_t *FD = packetReadBytes(&reader, sizeof(int));
@@ -285,7 +302,6 @@ void manageNewClient(struct packetHeader header, int sourceClientFD){
         return;
     }
     introduceNewClient(clientList, newClient);
-    printf("User's name is : %s", newClient.name);
     addClientInClientList(&clientList, newClient);
     sendClientListToClient(clientList, sourceClientFD);
     free(newClient.name);
