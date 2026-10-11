@@ -92,26 +92,6 @@ struct packetHeader {
 };
 ```
 
-The `packetType` enum defines a wide range of message categories, including:
-
-- chat and direct messaging
-- client list synchronization
-- room/group operations
-- join and leave events
-- file transfer packets
-
-### Packet flow
-
-A typical exchange is:
-
-1. sender writes a `packetHeader`
-2. sender writes a payload for the specific message type
-3. receiver reads the header with `recvAll()`
-4. receiver reads the full payload based on `payloadSize`
-5. protocol handler parses the payload and performs the appropriate action
-
-This design is simple and effective for local experimentation, and it is easy to trace in the code because packet dispatch is centralized in the protocol handlers.
-
 ## Serialization internals
 
 The project implements its own serializer in `src/shared/serializer/serializer.c`.
@@ -148,72 +128,11 @@ The pattern is used in places like:
 - `receiveDataFromClient()` on the server
 - packet parsing functions in both protocol layers
 
-## Client and server state management
-
-### Client list
-
-`src/shared/client_manager/client_manager.c` manages a dynamic list of connected clients.
-
-The client structure is defined in `model.h` as:
-
-```c
-struct client {
-    char *name;
-    int FD;
-};
-```
-
-This list is used to:
-
-- track connected clients
-- broadcast join/leave notifications
-- resolve user names to socket file descriptors
-- synchronize user lists to clients
-- route direct messages
-
-### Group list
-
-`src/shared/group/group.c` implements room/group management, including:
-
-- creating a new group
-- storing group metadata
-- adding/removing members
-- printing the list of available groups
-
-A group is represented as:
-
-```c
-struct group {
-    char *name;
-    char *description;
-    struct client admin;
-    struct clientList members;
-};
-```
-
-This supports both room semantics and simple chat-channel behavior.
-
-## Messaging model
-
-The project supports multiple message patterns:
-
-### Direct messaging
-
-A client sends a direct message packet with the destination socket FD and payload. The server reads this packet and forwards it to the target connection.
-
-### Group chat
-
-Group messages are routed to all members in a room by looking up the room in the server-side `roomList` state and broadcasting the payload to each member socket.
-
-### User lifecycle events
-
 When a user connects, the server:
 
 1. registers the client in the client list
 2. sends a client list update to the new user
 3. notifies existing clients about the new connection
-
-When a user disconnects, the server removes them from the list and broadcasts a departure notification to all remaining participants.
 
 ## File transfer
 
@@ -242,14 +161,6 @@ This produces:
 
 - `build/server`
 - `build/client`
-
-The Makefile also includes compile flags such as:
-
-- `-Wall`
-- `-Wextra`
-- `-g`
-- `-O0`
-- `-pthread`
 
 This is a good default for learning and debugging C code, especially for networking and concurrency work.
 
@@ -281,10 +192,10 @@ The client uses slash commands for interaction.
 /help
 /refresh
 /create_group
-/chat Alice
-/open MyGroup
-/leave_group MyGroup
-/kick Bob
+/chat <client_name>
+/open <group_name>
+/leave_group <group_name>
+/kick <member_name>
 ```
 
 ### Help topics
@@ -306,55 +217,42 @@ These commands are parsed in `src/client/commands/command_manager/commandManager
 ## Repository layout
 
 ```text
-C-etworking/
-├── README.md
+.
+├── build
 ├── makefile
-├── .gitignore
-├── build/
-├── src/
-│   ├── client/
-│   │   ├── client.c
-│   │   ├── commands/
-│   │   │   ├── command_manager/
-│   │   │   ├── help/
-│   │   │   ├── internal_commands/
-│   │   │   └── main_commands/
-│   │   ├── network/
-│   │   ├── protocol/
-│   │   └── shared_list/
-│   ├── server/
-│   │   ├── server.c
-│   │   ├── network/
-│   │   ├── protocol/
-│   │   └── shared_list/
-│   └── shared/
-│       ├── client_manager/
-│       ├── group/
-│       ├── recv_all/
-│       ├── serializer/
-│       ├── model.h
-│       └── ...
-└── ...
+├── README.md
+└── src
+    ├── client
+    │   ├── client.c
+    │   ├── commands
+    │   │   ├── command_manager
+    │   │   ├── help
+    │   │   ├── internal_commands
+    │   │   └── main_commands
+    │   ├── network
+    │   ├── protocol
+    │   └── shared_list
+    ├── server
+    │   ├── network
+    │   ├── protocol
+    │   ├── server.c
+    │   └── shared_list
+    └── shared
+        ├── client_manager
+        ├── group
+        ├── model.h
+        ├── recv_all
+        └── serializer
+
+23 directories, 39 files
 ```
-
-## Strengths of the implementation
-
-- clear separation between server, client, and shared logic
-- practical use of socket APIs and threads
-- custom packet protocol instead of a framework abstraction
-- explicit state management for users and rooms
-- direct educational value for systems/networking coursework
-
 ## Limitations and caveats
 
 This is a learning-oriented project rather than a production-grade messaging platform. The implementation is intentionally lightweight and has some rough edges, including:
 
-- no authentication or authorization layer
 - no encryption or TLS
 - no persistent storage or database
 - minimal input validation
-- no production-focused error recovery or reconnection strategy
-- local-only design assumptions
 
 This is fine for demonstrating networking fundamentals, but it should not be treated as a secure or production-ready system.
 
@@ -371,9 +269,4 @@ This repository is well suited for:
 ## Summary
 
 Cetworking is a compact, educational C networking project that demonstrates how to build a TCP chat application from the socket layer up. It covers local network communication, custom message framing, concurrent client handling, room-based communication, and file transfer over stream sockets.
-
 It is most valuable as a technical learning project for engineers and students interested in systems programming, networking, protocol design, and real-world C application architecture.
-
-## License
-
-This repository does not currently declare a license in the GitHub metadata.
