@@ -11,74 +11,6 @@
 #include "../../protocol/protocol.h"
 #include "../../shared_list/shared_list.h"
 
-static void printHelpMenu(void){
-    printf("\n========================================\n");
-    printf("          Cetworking Help Menu\n");
-    printf("========================================\n\n");
-
-    printf("General commands:\n");
-    printf("  /help              Show this help menu\n");
-    printf("  /help chat         Show chat-mode commands\n");
-    printf("  /help group        Show group-chat commands\n");
-    printf("  /refresh           Show online users and groups\n");
-    printf("  /quit or /q        Exit the application\n\n");
-
-    printf("User chat commands:\n");
-    printf("  /chat <username>   Start a private chat with a user\n");
-    printf("  /send              Send a file while chatting with someone\n");
-    printf("  /back              Exit the current chat and return\n\n");
-
-    printf("Group commands:\n");
-    printf("  /create_group      Create a new group room\n");
-    printf("  /open <group>      Open an existing group chat\n");
-    printf("  /add_member        Add a user to the selected group\n");
-    printf("  /leave_group <name> Leave a group\n");
-    printf("  /kick <user>       Kick a member from the current group\n");
-    printf("  /info              Show information about the current group\n\n");
-
-    printf("Examples:\n");
-    printf("  /chat Alice\n");
-    printf("  /create_group\n");
-    printf("  /open TeamChat\n");
-    printf("  /kick Bob\n");
-    printf("  /leave_group TeamChat\n\n");
-    printf("========================================\n\n");
-}
-
-static void printChatHelpMenu(void){
-    printf("\n========================================\n");
-    printf("          Chat Mode Help\n");
-    printf("========================================\n\n");
-
-    printf("While in a private chat:\n");
-    printf("  <message>          Send a message to this user\n");
-    printf("  /send              Send a file to this user\n");
-    printf("  /back              Exit this chat and return\n\n");
-    printf("Example:\n");
-    printf("  hello there\n");
-    printf("  /send\n");
-    printf("  /back\n\n");
-    printf("========================================\n\n");
-}
-
-static void printGroupHelpMenu(void){
-    printf("\n========================================\n");
-    printf("          Group Chat Help\n");
-    printf("========================================\n\n");
-
-    printf("Inside a group:\n");
-    printf("  <message>          Send a message to the whole group\n");
-    printf("  /info              Show group members and description\n");
-    printf("  /kick <user>       Kick a member from the group\n");
-    printf("  /back              Leave the group chat and return\n\n");
-    printf("Example:\n");
-    printf("  hello everyone\n");
-    printf("  /info\n");
-    printf("  /kick Bob\n");
-    printf("  /back\n\n");
-    printf("========================================\n\n");
-}
-
 void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int mySocketFD){
     uint8_t isNotFound = 1;
     char *argv[3];
@@ -97,17 +29,17 @@ void manageCommands(char *commandBuffer, int serverSocketFD, char *myName, int m
 
     if(strcmp(argv[0], "/help") == 0){
         if(argc == 1){
-            printHelpMenu();
+            printMainHelp();
             return;
         }
 
         if(argc == 2){
             if(strcmp(argv[1], "chat") == 0){
-                printChatHelpMenu();
+                printChatHelp();
                 return;
             }
             if(strcmp(argv[1], "group") == 0){
-                printGroupHelpMenu();
+                printGroupHelp();
                 return;
             }
             printf("Unknown help topic. Try: /help, /help chat, /help group\n");
