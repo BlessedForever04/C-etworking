@@ -6,6 +6,7 @@
 #include "mainCommands.h"
 #include "../../../shared/model.h"
 #include "../../../shared/serializer/serializer.h"
+#include "../../../shared/client_manager/client_manager.h"
 #include "../../protocol/protocol.h"
 #include "../../shared_list/shared_list.h"
 #include "../internal_commands/internalCommands.h"
@@ -74,7 +75,7 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
 
     printf("-- %s --\n--------------\n", user->name);
 
-    struct messagePacket message;
+    struct messagePacket message = {0};
 
     // Communication loop with user
     while(true){
@@ -83,6 +84,7 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
         int charCount = getline(&message.message, &lineSize, stdin);
         if(charCount <= 0){
             perror("getline");
+            free(message.message);
             exit(EXIT_FAILURE);
         }
         
@@ -128,7 +130,8 @@ void chatWithUser(struct client *user, char *myName, int mySocketFD, int serverS
         // Sending message packet
         send(serverSocketFD, writer.buffer, writer.size, 0); 
         free(writer.buffer);
-    } 
+    }
+    free(message.message);
 }
 
 void chatWithinGroup(char *groupName, char *myName, int mySocketFD, int serverSocketFD){
@@ -138,7 +141,7 @@ void chatWithinGroup(char *groupName, char *myName, int mySocketFD, int serverSo
 
     printf("-- %s --\n--------------\n", groupName);
     
-    struct messagePacket message;
+    struct messagePacket message = {0};
 
     // Communication loop within group
     while(true){
@@ -147,6 +150,7 @@ void chatWithinGroup(char *groupName, char *myName, int mySocketFD, int serverSo
         int charCount = getline(&message.message, &lineSize, stdin);
         if(charCount <= 0){
             perror("getline");
+            free(message.message);
             exit(EXIT_FAILURE);
         }
         
@@ -192,7 +196,8 @@ void chatWithinGroup(char *groupName, char *myName, int mySocketFD, int serverSo
         // Sending message packet
         send(serverSocketFD, writer.buffer, writer.size, 0); 
         free(writer.buffer);
-    } 
+    }
+    free(message.message);
 }
 
 void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD){
@@ -221,9 +226,6 @@ void shareNewGroupDetailsToServer(struct group newGroup, int serverSocketFD){
     send(serverSocketFD, writer.buffer, header.payloadSize, 0);
 
     // Freeing memory
-    free(newGroup.admin.name);
-    free(newGroup.name);
-    free(newGroup.description);
     free(writer.buffer);
 }
 
@@ -233,6 +235,8 @@ void getUserAndGroupName(char **userName, char **groupName){
     int charCount = getline(userName, &lineSize, stdin);
     if(charCount <= 0){
         perror("getline");
+        free(*userName);
+        *userName = NULL;
         exit(EXIT_FAILURE);
     }
     removeNewline(*userName);
@@ -242,6 +246,8 @@ void getUserAndGroupName(char **userName, char **groupName){
     charCount = getline(groupName, &lineSize, stdin);
     if(charCount <= 0){
         perror("getline");
+        free(*userName);
+        *userName = NULL;
         exit(EXIT_FAILURE);
     }
     removeNewline(*groupName);
@@ -266,4 +272,5 @@ void shareAddedMemberDetailsToServer(char *groupName, struct client newMember, i
     send(serverSocketFD, &header, sizeof(header), 0);
     //sending actual buffer
     send(serverSocketFD, writer.buffer, header.payloadSize, 0);
+    free(writer.buffer);
 }

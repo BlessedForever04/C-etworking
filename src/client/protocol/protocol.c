@@ -97,7 +97,6 @@ void manageIncomingFile(struct packetHeader header, int serverSocketFD){
         printf("received Bytes: %ld", receivedBytes);
         if(receivedBytes <= 0){
             printf("Error: received 0 bytes during ftp\n");
-            return;
         }
         file_size -= receivedBytes;
         write(fileFD, buffer, receivedBytes);
@@ -129,6 +128,11 @@ void manageLeftGroupMember(struct packetHeader header, int serverSocketFD){
             break;
         }
     }
+
+    free(FD);
+    free(userName);
+    free(groupName);
+    free(reader.buffer);
 }
 
 void handleItBro(){
@@ -221,7 +225,9 @@ void manageNewGroup(struct packetHeader header, int serverSocketFD){
     newGroup.name = packetReadString(&reader);
     newGroup.description = packetReadString(&reader);
     newGroup.admin.name = packetReadString(&reader);
-    newGroup.admin.FD = *packetReadBytes(&reader, sizeof(int));
+    uint8_t *adminFD = packetReadBytes(&reader, sizeof(int));
+    memcpy(&newGroup.admin.FD, adminFD, sizeof(newGroup.admin.FD));
+    free(adminFD);
 
     addClientInClientList(&newGroup.members, newGroup.admin);
     addGroupInGroupList(&groupList, newGroup);
@@ -254,6 +260,7 @@ void handleLeftUser(struct packetHeader header, int serverSocketFD){
 
     if(receivedBytes <= 0){
         perror("recv");
+        free(leftUser);
         exit(EXIT_FAILURE);
     }
     removeClientFromClientList(&userList, *leftUser);
@@ -318,6 +325,7 @@ void receiveGroupList(struct packetHeader header, int socketFD){
     newGroup.admin.name = packetReadString(&reader);
     uint8_t *FD = packetReadBytes(&reader, sizeof(int));
     memcpy(&newGroup.admin.FD, FD, sizeof(int));
+    free(FD);
     
     struct client groupMember;
     while(reader.size > 0){
@@ -336,7 +344,5 @@ void receiveGroupList(struct packetHeader header, int socketFD){
     free(newGroup.description);
     free(newGroup.admin.name);
 
-    for(size_t i = 0; i < newGroup.members.size; i++){
-        free(newGroup.members.clients[i].name);
-    }
+    freeClientList(&newGroup.members);
 }

@@ -15,6 +15,7 @@ struct group createGroup(int adminFD, char *adminName){
 
     if(readByte == (size_t)-1){
         perror("getline");
+        free(groupName);
         exit(EXIT_FAILURE);
     }
 
@@ -23,6 +24,8 @@ struct group createGroup(int adminFD, char *adminName){
     
     if(readByte == (size_t)-1){
         perror("getline");
+        free(groupName);
+        free(groupDescription);
         exit(EXIT_FAILURE);
     }
 
@@ -80,18 +83,32 @@ void addGroupInGroupList(struct groupList *groupList, struct group newGroup){
 void removeGroupFromGroupList(struct groupList *groupList, char *groupName){
     for(size_t i = 0; i < groupList->size; i++){
         if(strcmp(groupName, groupList->group[i].name) == 0){
-            groupList->group[i] = groupList->group[groupList->size - 1];
-            free(groupList->group[groupList->size - 1].name);
-            free(groupList->group[groupList->size - 1].description);
-            free(groupList->group[groupList->size - 1].admin.name);
+            size_t lastIndex = groupList->size - 1;
+            free(groupList->group[i].name);
+            free(groupList->group[i].description);
+            free(groupList->group[i].admin.name);
+            freeClientList(&groupList->group[i].members);
 
-            for(size_t j = 0; j < groupList->group[groupList->size - 1].members.size; j++){
-                free(groupList->group[groupList->size - 1].members.clients[j].name);
+            if(i != lastIndex){
+                groupList->group[i] = groupList->group[lastIndex];
             }
-
             groupList->size--;
+            break;
         }
     }
+}
+
+void freeGroupList(struct groupList *groupList){
+    for(size_t i = 0; i < groupList->size; i++){
+        free(groupList->group[i].name);
+        free(groupList->group[i].description);
+        free(groupList->group[i].admin.name);
+        freeClientList(&groupList->group[i].members);
+    }
+    free(groupList->group);
+    groupList->group = NULL;
+    groupList->size = 0;
+    groupList->capacity = 0;
 }
 
 void printGroupList(struct groupList groupList){

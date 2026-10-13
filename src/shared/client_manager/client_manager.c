@@ -15,6 +15,16 @@ void removeClientFromClientList(struct clientList *clientList, int targetFD){
     }
 }
 
+void freeClientList(struct clientList *clientList){
+    for(size_t i = 0; i < clientList->size; i++){
+        free(clientList->clients[i].name);
+    }
+    free(clientList->clients);
+    clientList->clients = NULL;
+    clientList->size = 0;
+    clientList->capacity = 0;
+}
+
 struct client getClientName(struct packetHeader header, int clientFD){
     struct client newClient = {NULL, 0};
 

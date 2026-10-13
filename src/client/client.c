@@ -8,6 +8,9 @@
 #include "commands/command_manager/commandManager.h"
 #include "network/network.h"
 #include "../shared/model.h"
+#include "../shared/client_manager/client_manager.h"
+#include "../shared/group/group.h"
+#include "shared_list/shared_list.h"
 
 int main(){
     uint16_t port = 5000;
@@ -36,8 +39,12 @@ int main(){
     if(connectStatus == 0) printf("Connection successful!\n");
     if(connectStatus != 0){
         perror("connect");
+        free(serverAddressPtr);
+        free(myName);
+        close(socketFD);
         return 1;
     }
+    free(serverAddressPtr);
 
     // Introduction header
     struct packetHeader introHeader;
@@ -47,12 +54,23 @@ int main(){
     // Can't pass multiple variables via function used for pthread so coupling name and socketFD
     struct pair socketAndName;
     socketAndName.name = malloc(strlen(myName) + 1);
+    if(socketAndName.name == NULL){
+        perror("malloc");
+        free(myName);
+        close(socketFD);
+        return 1;
+    }
     strcpy(socketAndName.name, myName);
     socketAndName.socketFD = socketFD;
 
     // Thread for receiving data from server and printing on terminal
     pthread_t receiveThread;
-    pthread_create(&receiveThread, NULL, receiveDataFromServer, &socketAndName);
+    if(pthread_create(&receiveThread, NULL, receiveDataFromServer, &socketAndName) != 0){
+        free(socketAndName.name);
+        free(myName);
+        close(socketFD);
+        return 1;
+    }
     
     // Sending header for name
     send(socketFD, &introHeader, sizeof(introHeader), 0);
@@ -61,8 +79,17 @@ int main(){
     send(socketFD, myName, introHeader.payloadSize, 0);    
     
     // Writing message to server
-    struct messagePacket message;
+    struct messagePacket message = {0};
     message.sender = malloc(strlen(myName) + 1);
+    if(message.sender == NULL){
+        perror("malloc");
+        shutdown(socketFD, SHUT_RDWR);
+        pthread_join(receiveThread, NULL);
+        free(socketAndName.name);
+        free(myName);
+        close(socketFD);
+        return 1;
+    }
     snprintf(message.sender, strlen(myName) + 1, "%s", myName);
     
     // Found the culprit, ts is dangerous, have to deal with it, its only used for creating group (newGruop.admin.FD = ts); T_T
@@ -88,6 +115,12 @@ int main(){
         }
     }
 
+    shutdown(socketFD, SHUT_RDWR);
+    pthread_join(receiveThread, NULL);
+    free(socketAndName.name);
+    free(currentCommunication);
+    freeClientList(&userList);
+    freeGroupList(&groupList);
     free(myName);
     free(message.message);
     free(message.sender);

@@ -81,7 +81,6 @@ void manageFileTransfer(struct packetHeader header, int sourceClientFD){
         printf("receivedBytes of file: %ld", receivedBytes);
         if(receivedBytes < 0){
             printf("Error: Received 0 Bytes during ftp\n");
-            return;
         }
         file_size -= receivedBytes;
         send(destinationFD, buffer, receivedBytes, 0);
@@ -269,6 +268,7 @@ void sendGroupDetailsToAddedMember(struct group group, int newMemberFD){
 
     send(newMemberFD, &header, sizeof(header), 0);
     send(newMemberFD, writer.buffer, header.payloadSize, 0);
+    free(writer.buffer);
 }
 
 void manageNewRoom(struct packetHeader header, int sourceClientFD){

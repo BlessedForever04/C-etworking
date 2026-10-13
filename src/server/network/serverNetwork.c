@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "serverNetwork.h"
 #include "../protocol/protocol.h"
 #include "../../shared/recv_all/recv_all.h"
@@ -19,6 +20,7 @@ struct sockaddr_in* createSocketAddress(char *ip_address, uint16_t port){
 
 void *receiveDataFromClient(void *arg){
     int socketFD = *(int*)arg;
+    free(arg);
     struct packetHeader header = {0};
 
     while(1){
@@ -37,15 +39,24 @@ void *receiveDataFromClient(void *arg){
 void receiveAndManageIncomingDataOnSaperateThread(int clientFD){
     pthread_t clientThread;
     int *clientFDPtr = malloc(sizeof(int));
+    if(clientFDPtr == NULL){
+        perror("malloc");
+        return;
+    }
     *clientFDPtr = clientFD;
-    pthread_create(&clientThread, NULL, receiveDataFromClient, clientFDPtr);
+    if(pthread_create(&clientThread, NULL, receiveDataFromClient, clientFDPtr) != 0){
+        free(clientFDPtr);
+        return;
+    }
     pthread_detach(clientThread);
 }
 
 void startAcceptingIncomingConnection(int serverSocketFD){
     while(1){
         struct acceptedConnection *acceptedClient = acceptIncomingConnection(serverSocketFD);
-        receiveAndManageIncomingDataOnSaperateThread(acceptedClient->FD);
+        int clientFD = acceptedClient->FD;
+        free(acceptedClient);
+        receiveAndManageIncomingDataOnSaperateThread(clientFD);
     }
 }
 

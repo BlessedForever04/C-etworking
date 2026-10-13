@@ -24,6 +24,7 @@ CFLAGS := \
 
 CLIENT_SOURCES := \
 	src/client/commands/command_manager/commandManager.c \
+	src/client/commands/help/help.c \
 	src/client/commands/internal_commands/internalCommands.c \
 	src/client/commands/main_commands/mainCommands.c \
 	src/client/network/network.c \

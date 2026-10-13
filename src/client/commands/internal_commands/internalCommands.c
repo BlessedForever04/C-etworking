@@ -5,30 +5,32 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/sendfile.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
 void sendFile(int serverSocketFD, int destinationFD){
-    char *file_name;
+    char *file_name = NULL;
     size_t n = 0;
 
     printf("Enter file name:");
-    getline(&file_name, &n, stdin);
+    if(getline(&file_name, &n, stdin) <= 0){
+        free(file_name);
+        return;
+    }
 
     file_name[strlen(file_name) - 1] = '\0';
     int file = open(file_name, O_RDONLY);
 
     if(file < 0){
         printf("Error: File doesn't exist, enter correct name.\n");
+        free(file_name);
         return;
     }
     else{
         struct stat st;
         if(fstat(file, &st) < 0) perror("fstat");
-        off_t offset = 0;
         struct packetWriter file_information_buffer;
 
         //                         destinationFD + length of name   + name              + file size
@@ -44,12 +46,21 @@ void sendFile(int serverSocketFD, int destinationFD){
         send(serverSocketFD, &header, sizeof(header), 0);
         send(serverSocketFD, file_information_buffer.buffer, file_information_buffer.size, 0); 
 
-        int remaining = st.st_size;
+        off_t remaining = st.st_size;
+        char buffer[1024 * 1024];
 
         while(remaining > 0){
-            ssize_t sent = sendfile(serverSocketFD, file, &offset, remaining);
-            remaining -= sent; 
+            ssize_t bytesRead = read(file, buffer, sizeof(buffer));
+            if(bytesRead <= 0){
+                break;
+            }
+            ssize_t bytesSent = send(serverSocketFD, buffer, (size_t)bytesRead, 0);
+            if(bytesSent <= 0){
+                break;
+            }
+            remaining -= bytesSent;
         }
+        free(file_information_buffer.buffer);
     }
     close(file);
     free(file_name);
@@ -104,6 +115,7 @@ void kickMemberAndShareOnServer(char *myName, char *userName, char *groupName, i
                     send(serverSocketFD, &header, sizeof(header), 0);
                     send(serverSocketFD, writer.buffer, header.payloadSize, 0);
                     printf("Kicked %s\n", userName);
+                    free(writer.buffer);
                 }
                 else{
                     printf("Error: Only admin can access this command.\n");

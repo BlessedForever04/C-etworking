@@ -19,6 +19,10 @@ void packetWriterInIt(struct packetWriter *writer, uint32_t payloadSize){
 
 void packetReaderInIt(struct packetReader *reader, uint32_t payloadSize, int socketFD){
     reader->buffer = malloc(payloadSize);
+    if(reader->buffer == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
     if(recvAll(socketFD, reader->buffer, payloadSize) <= 0){
         free(reader->buffer);
         reader->buffer = NULL;
@@ -54,6 +58,10 @@ char *packetReadString(struct packetReader *reader){
 
 uint8_t *packetReadBytes(struct packetReader *reader, uint32_t payloadSize){ // Here payload is any byte stream
     uint8_t *bytes = malloc(payloadSize);
+    if(bytes == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
     memcpy(bytes, reader->offset, payloadSize);
     reader->offset += payloadSize;
     reader->size -= payloadSize;
@@ -69,11 +77,12 @@ void packetWriteBytes(struct packetWriter *writer, void *data, size_t size){
     }
 
     if(resized) {
-        writer->buffer = realloc(writer->buffer, writer->capacity);
-        if(writer->buffer == NULL){
+        uint8_t *resizedBuffer = realloc(writer->buffer, writer->capacity);
+        if(resizedBuffer == NULL){
             perror("realloc");
             exit(EXIT_FAILURE);
         }
+        writer->buffer = resizedBuffer;
     }    
 
     uint8_t *currentBufferLocation = writer->buffer + writer->size;
@@ -95,11 +104,12 @@ void packetWriteString(struct packetWriter *writer, char *data){
     }
 
     if(resized) {
-        writer->buffer = realloc(writer->buffer, writer->capacity);
-        if(writer->buffer == NULL){
+        uint8_t *resizedBuffer = realloc(writer->buffer, writer->capacity);
+        if(resizedBuffer == NULL){
             perror("realloc");
             exit(EXIT_FAILURE);
         }
+        writer->buffer = resizedBuffer;
     }    
     uint8_t *currentBufferLocation = writer->buffer + writer->size;
     

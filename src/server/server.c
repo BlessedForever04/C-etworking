@@ -15,6 +15,7 @@ int main(){
     if(bindStatus == 0) printf("Server binding is successful!\n");
     if(bindStatus < 0){
         perror("bind");
+        free(serverAddressPtr);
         return 1;
     }
 
@@ -22,6 +23,7 @@ int main(){
     if(listenStatus == 0) printf("Server is listening on port %d..\n", port);
     if(listenStatus != 0){
         perror("listen");
+        free(serverAddressPtr);
         return 1;
     }
 
